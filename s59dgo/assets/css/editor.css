@@ -1,0 +1,27 @@
+/* Slogi urejevalnika blokov – usklajeni s style.css. */
+.editor-styles-wrapper {
+	font-family: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
+	font-size: 17px;
+	line-height: 1.6;
+	color: #172433;
+	background: #ffffff;
+}
+.editor-styles-wrapper h1,
+.editor-styles-wrapper h2,
+.editor-styles-wrapper h3,
+.editor-styles-wrapper h4 {
+	font-family: 'Space Grotesk', 'Trebuchet MS', Arial, sans-serif;
+	font-weight: 700;
+	color: #15304f;
+	line-height: 1.2;
+}
+.editor-styles-wrapper a {
+	color: #d9702a;
+}
+.editor-styles-wrapper .wp-block-button__link {
+	background: #d9702a;
+	color: #ffffff;
+	border-radius: 4px;
+	font-family: 'Space Grotesk', 'Trebuchet MS', Arial, sans-serif;
+	font-weight: 700;
+}

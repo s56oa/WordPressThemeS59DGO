@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="1200" height="900">
+  <rect width="1200" height="900" fill="#eef3f8"/>
+  <rect width="1200" height="330" fill="#15304f"/>
+  <circle cx="86" cy="60" r="28" fill="#2a5687" stroke="#ffffff" stroke-opacity="0.2" stroke-width="4"/>
+  <circle cx="86" cy="60" r="10" fill="#d9702a"/>
+  <text x="130" y="56" font-family="Space Grotesk, Trebuchet MS, Arial, sans-serif" font-size="22" font-weight="700" fill="#ffffff">RADIO KLUB SNEŽNIK</text>
+  <text x="130" y="78" font-family="IBM Plex Sans, Helvetica Neue, Arial, sans-serif" font-size="12" font-weight="600" letter-spacing="2" fill="#9fc0e0">ILIRSKA BISTRICA · S59DGO · EST. 1964</text>
+  <text x="60" y="200" font-family="Space Grotesk, Trebuchet MS, Arial, sans-serif" font-size="56" font-weight="700" fill="#ffffff">Novice s Snežnika</text>
+  <text x="60" y="240" font-family="IBM Plex Sans, Helvetica Neue, Arial, sans-serif" font-size="20" fill="#b9d0e6">Dogodki, tekmovanja in obvestila Radio kluba Snežnik Ilirska Bistrica.</text>
+  <path d="M0 330 L0 300 L100 288 L190 298 L280 272 L350 284 L440 262 L510 280 L590 250 L670 274 L740 262 L830 286 L910 268 L990 288 L1080 276 L1160 292 L1200 282 L1200 330 Z" fill="#eef3f8"/>
+  <g fill="#ffffff">
+    <rect x="60" y="380" width="340" height="220" rx="6"/>
+    <rect x="430" y="380" width="340" height="220" rx="6"/>
+    <rect x="800" y="380" width="340" height="220" rx="6"/>
+  </g>
+  <g fill="#2a5687">
+    <path d="M60 560 L150 500 L240 540 L330 470 L400 520 L400 600 L60 600 Z"/>
+    <path d="M430 560 L520 500 L610 540 L700 470 L770 520 L770 600 L430 600 Z"/>
+    <path d="M800 560 L890 500 L980 540 L1070 470 L1140 520 L1140 600 L800 600 Z"/>
+  </g>
+  <g>
+    <rect x="60" y="624" width="84" height="22" rx="3" fill="#15304f"/>
+    <rect x="430" y="624" width="84" height="22" rx="3" fill="#15304f"/>
+    <rect x="800" y="624" width="84" height="22" rx="3" fill="#15304f"/>
+  </g>
+  <g fill="#15304f">
+    <rect x="60" y="666" width="300" height="18" rx="3"/>
+    <rect x="60" y="692" width="220" height="18" rx="3"/>
+    <rect x="430" y="666" width="300" height="18" rx="3"/>
+    <rect x="430" y="692" width="200" height="18" rx="3"/>
+    <rect x="800" y="666" width="300" height="18" rx="3"/>
+    <rect x="800" y="692" width="240" height="18" rx="3"/>
+  </g>
+  <g fill="#c9d6e3">
+    <rect x="60" y="730" width="340" height="12" rx="3"/>
+    <rect x="60" y="750" width="280" height="12" rx="3"/>
+    <rect x="430" y="730" width="340" height="12" rx="3"/>
+    <rect x="430" y="750" width="300" height="12" rx="3"/>
+    <rect x="800" y="730" width="340" height="12" rx="3"/>
+    <rect x="800" y="750" width="260" height="12" rx="3"/>
+  </g>
+  <rect x="520" y="820" width="160" height="44" rx="4" fill="#15304f"/>
+  <text x="600" y="848" text-anchor="middle" font-family="Space Grotesk, Trebuchet MS, Arial, sans-serif" font-size="15" font-weight="700" fill="#ffffff">Starejše objave</text>
+</svg>
