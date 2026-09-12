@@ -8,6 +8,8 @@ Klasična WordPress tema `s59dgo` za www.s59dgo.org (Radio klub Snežnik Ilirska
 
 Potrjen dizajn: `docs/superpowers/specs/2026-09-09-s59dgo-wordpress-theme-design.md`. Vizualna referenca (smer »Grebeni«): https://claude.ai/code/artifact/ee9e3cd9-3f7a-4423-8d20-946d153fc80b
 
+Grafika za objave (naslovne slike, infografike, omrežja, ikone): predloge AI promptov v `docs/ai-prompti-grafika.md`, referenčne SVG/PNG v slogu teme v `docs/grafika-referenca/`.
+
 ## Ukazi
 
 Lokalno ni PHP niti WordPressa; PHP teče prek Dockerja.
@@ -18,6 +20,7 @@ bin/test.sh          # statični in enotski testi v tests/ (stubi WP funkcij v t
 bin/phpcs.sh         # PHPCS z WordPress Coding Standards v Dockerju (phpcs.xml.dist); bin/phpcs.sh --fix požene phpcbf
 bin/build-zip.sh     # lint + testi + phpcs + dist/s59dgo.zip za nalaganje v WP administracijo
 bin/screenshot.sh    # regenerira s59dgo/screenshot.png iz bin/screenshot.svg (rsvg-convert v Dockerju)
+bin/grafika-referenca.sh  # upodobi docs/grafika-referenca/*.svg v PNG s pisavama teme
 ```
 
 Nov test: `tests/test-<ime>.php`, ki vključi `tests/preveri.php` (in `tests/stubs.php` za funkcije iz `inc/`).

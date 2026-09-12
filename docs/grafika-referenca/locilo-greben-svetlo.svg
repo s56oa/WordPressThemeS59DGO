@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 400" width="1600" height="400">
+  <!-- Brezšivno ponovljiv trak grebena (svetla različica za belo podlago). -->
+  <rect width="1600" height="400" fill="#ffffff"/>
+  <path d="M0 300 L120 200 L260 260 L420 150 L560 240 L720 180 L900 270 L1060 160 L1220 250 L1400 190 L1600 300 L1600 400 L0 400 Z" fill="#b9d0e6"/>
+  <path d="M0 340 L160 280 L320 330 L500 240 L680 320 L860 260 L1040 330 L1220 270 L1420 330 L1600 340 L1600 400 L0 400 Z" fill="#d3dfeb"/>
+  <path d="M0 380 L200 340 L400 370 L600 320 L800 365 L1000 330 L1200 370 L1400 345 L1600 380 L1600 400 L0 400 Z" fill="#eef3f8"/>
+</svg>

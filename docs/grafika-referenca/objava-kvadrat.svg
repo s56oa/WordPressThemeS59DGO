@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080" width="1080" height="1080">
+  <!-- Referenčna objava za družbena omrežja (1:1): napoved dogodka. -->
+  <rect width="1080" height="1080" fill="#15304f"/>
+  <!-- značka -->
+  <rect x="88" y="96" width="150" height="40" rx="4" fill="#d9702a"/>
+  <text x="163" y="123" text-anchor="middle" font-family="IBM Plex Sans, DejaVu Sans, Arial, sans-serif" font-size="16" font-weight="600" letter-spacing="2.4" fill="#ffffff">DOGODEK</text>
+  <!-- naslov -->
+  <text font-family="Space Grotesk, DejaVu Sans, Trebuchet MS, Arial, sans-serif" font-size="82" font-weight="700" fill="#ffffff" letter-spacing="-1.5">
+    <tspan x="88" y="254">Field day</tspan>
+    <tspan x="88" y="346">na Sviščakih</tspan>
+  </text>
+  <!-- datum in kraj -->
+  <text x="88" y="420" font-family="IBM Plex Sans, DejaVu Sans, Arial, sans-serif" font-size="22" font-weight="600" letter-spacing="3" fill="#b9d0e6">SOB, 20. 6. 2026 · SVIŠČAKI, 1240 M</text>
+  <text x="88" y="470" font-family="IBM Plex Sans, DejaVu Sans, Arial, sans-serif" font-size="26" fill="#b9d0e6">Postavitev anten od 9. ure, delo na 144 in 432 MHz.</text>
+  <!-- sonce -->
+  <circle cx="900" cy="190" r="44" fill="#d9702a"/>
+  <!-- greben zadaj -->
+  <path d="M0 820 L140 740 L260 790 L400 680 L540 760 L680 700 L820 770 L960 690 L1080 740 L1080 1080 L0 1080 Z" fill="#1f4470"/>
+  <!-- jambor z Yagi na desnem vrhu (x=960,y=690) -->
+  <g fill="#b9d0e6">
+    <rect x="955" y="480" width="10" height="220"/>
+    <rect x="880" y="530" width="160" height="6"/>
+    <rect x="895" y="514" width="6" height="38"/><rect x="930" y="518" width="6" height="30"/><rect x="965" y="521" width="6" height="24"/><rect x="1000" y="524" width="6" height="18"/>
+  </g>
+  <g fill="none" stroke="#b9d0e6" stroke-width="4" stroke-linecap="round">
+    <path d="M890 480 A70 70 0 0 1 1030 480" opacity="0.8"/>
+    <path d="M850 450 A110 110 0 0 1 1070 450" opacity="0.45"/>
+  </g>
+  <!-- greben spredaj -->
+  <path d="M0 920 L160 860 L300 900 L460 820 L620 890 L780 830 L940 900 L1080 850 L1080 1080 L0 1080 Z" fill="#2a5687"/>
+  <!-- klicni znak -->
+  <text x="88" y="1000" font-family="IBM Plex Sans, DejaVu Sans, Arial, sans-serif" font-size="20" font-weight="600" letter-spacing="3" fill="#ffffff">S59DGO · WWW.S59DGO.ORG</text>
+</svg>
