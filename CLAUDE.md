@@ -8,7 +8,7 @@ Klasična WordPress tema `s59dgo` za www.s59dgo.org (Radio klub Snežnik Ilirska
 
 Potrjen dizajn: `docs/superpowers/specs/2026-09-09-s59dgo-wordpress-theme-design.md`. Vizualna referenca (smer »Grebeni«): https://claude.ai/code/artifact/ee9e3cd9-3f7a-4423-8d20-946d153fc80b
 
-Grafika za objave (naslovne slike, infografike, omrežja, ikone): predloge AI promptov v `docs/ai-prompti-grafika.md`, referenčne SVG/PNG v slogu teme v `docs/grafika-referenca/`.
+Grafika za objave (naslovne slike, infografike, omrežja, ikone): predloge AI promptov v `docs/ai-prompti-grafika.md`, referenčne SVG/PNG v slogu teme v `docs/grafika-referenca/`. Interaktivni vodnik s sestavljalnikom promptov: https://claude.ai/code/artifact/1f8918e8-d624-4fa1-853c-d24127de5d1e
 
 ## Ukazi
 
