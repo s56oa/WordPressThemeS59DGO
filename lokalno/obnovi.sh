@@ -99,6 +99,19 @@ zamenjaj '//www.s59dgo.org' '//localhost:8059'
 zamenjaj 'https://s59dgo.org' 'http://localhost:8059'
 zamenjaj 'http://s59dgo.org' 'http://localhost:8059'
 zamenjaj '//s59dgo.org' '//localhost:8059'
+# Še v JSON ubežane poševnice (bloki, nastavitve vtičnikov), spet od najdaljšega vzorca.
+zamenjaj 'https:\/\/www.s59dgo.si' 'http:\/\/localhost:8059'
+zamenjaj 'http:\/\/www.s59dgo.si' 'http:\/\/localhost:8059'
+zamenjaj '\/\/www.s59dgo.si' '\/\/localhost:8059'
+zamenjaj 'https:\/\/s59dgo.si' 'http:\/\/localhost:8059'
+zamenjaj 'http:\/\/s59dgo.si' 'http:\/\/localhost:8059'
+zamenjaj '\/\/s59dgo.si' '\/\/localhost:8059'
+zamenjaj 'https:\/\/www.s59dgo.org' 'http:\/\/localhost:8059'
+zamenjaj 'http:\/\/www.s59dgo.org' 'http:\/\/localhost:8059'
+zamenjaj '\/\/www.s59dgo.org' '\/\/localhost:8059'
+zamenjaj 'https:\/\/s59dgo.org' 'http:\/\/localhost:8059'
+zamenjaj 'http:\/\/s59dgo.org' 'http:\/\/localhost:8059'
+zamenjaj '\/\/s59dgo.org' '\/\/localhost:8059'
 
 echo "Izklopim two-factor in backuply …"
 wp plugin deactivate two-factor backuply --path="$html" --quiet

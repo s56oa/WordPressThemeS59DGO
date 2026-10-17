@@ -17,15 +17,18 @@ najnovejsi_arhiv() {
   printf '%s\n' "$najnovejsi"
 }
 
-# Vrne 1 s slovenskim sporočilom, če Docker ne teče ali je port 8059 zaseden.
+# Vrne 1 s slovenskim sporočilom, če Docker ne teče.
 preveri_docker() {
   if ! docker info >/dev/null 2>&1; then
     echo "Docker ne teče – zaženi Docker Desktop." >&2
     return 1
   fi
-  # Zaseden port je napaka le, če ga ne drži že naš wp.
-  if [ -z "$(dc ps -q wp 2>/dev/null)" ] && port_zaseden "$S59DGO_VRATA"; then
-    echo "Port ${S59DGO_VRATA} je zaseden." >&2
+}
+
+# Pred zagonom vsebnika vrata: vrne 1, če port 8059 drži kdo drug kot naš vsebnik vrata.
+preveri_vrata() {
+  if [ -z "$(dc ps -q vrata 2>/dev/null)" ] && port_zaseden "$S59DGO_VRATA"; then
+    echo "Port ${S59DGO_VRATA} je zaseden (drug program ali projekt); sprosti ga ali ustavi tisti projekt." >&2
     return 1
   fi
 }

@@ -4,10 +4,14 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 source lokalno/lib.sh
 
+# Staro poročilo ne sme ostati, če preverjanje pade, preden zapiše novo.
+rm -f dist/preverjanje/porocilo.html dist/preverjanje/najdbe.json
+
 preveri_docker || exit 1
 preveri_pripravljenost || exit 1
+preveri_vrata || exit 1
 
-dc up -d db wp
+dc up -d db wp vrata
 # WordPress mora odgovarjati, preden WP-CLI in kontrole začnejo.
 pripravljen=""
 for _ in $(seq 1 60); do
@@ -45,6 +49,8 @@ dc exec -T --user 33:33 wp sh -c ': > /stanje/debug.log'
 
 mkdir -p dist/preverjanje
 dc --profile preverjanje up -d validator
+# Gradnja je v predpomnilniku; spremembe Dockerfile ali vstop.sh se tako vedno uporabijo.
+dc --profile preverjanje build brskalnik
 izhod=0
 dc --profile preverjanje run --rm -T brskalnik node /opt/preverjanje/src/preveri.mjs || izhod=$?
 exit "$izhod"

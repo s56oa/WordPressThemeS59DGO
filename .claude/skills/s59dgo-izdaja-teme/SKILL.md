@@ -18,7 +18,7 @@ Tema je v produkciji na www.s59dgo.si (prej .org, preusmeritev od 2026-09-13). N
 1. **Verzija** (semver: nova funkcija = minor, popravek = patch):
    - `s59dgo/style.css` → `Version: X.Y.Z`
    - `s59dgo/readme.txt` → `Stable tag: X.Y.Z` in nov blok na vrhu `== Changelog ==` (`= X.Y.Z =`, alineje v slovenščini, napisane za urednika strani, ne za razvijalca).
-2. **Lokalno preverjanje**: če v `prod_backups/` obstaja arhiv, zaženi `bin/lokalno.sh obnovi` (če je arhiv novejši od zadnje obnove) in `bin/preveri-lokalno.sh`; poročilo je v `dist/preverjanje/porocilo.html`. Ob izhodni kodi 1 (najdbe `napaka`) izdaje ne nadaljuj. Če je arhiv starejši od 30 dni ali ga ni, to povej naročniku in predlagaj nov backup v Backuply. Najdbe `ročni korak` iz poročila dodaj v navodila za namestitev.
+2. **Lokalno preverjanje**: če v `prod_backups/` obstaja arhiv, zaženi `bin/lokalno.sh obnovi` (če je arhiv novejši od zadnje obnove) in `bin/preveri-lokalno.sh`; poročilo je v `dist/preverjanje/porocilo.html`. Ob izhodni kodi ≠ 0 (najdbe `napaka` ali preverjanje se ni izvedlo do konca) izdaje ne nadaljuj. Če je arhiv starejši od 30 dni ali ga ni, to povej naročniku in predlagaj nov backup v Backuply. Najdbe `ročni korak` iz poročila dodaj v navodila za namestitev.
 3. **Preverjanje in zip**: `bin/build-zip.sh` požene lint, `bin/test.sh` (PHP testi + Node test generatorja promptov), PHPCS in ustvari `dist/s59dgo.zip`. Izpis preusmeri v datoteko in preberi rep; ob napaki popravi vzrok, ne testa.
 4. **Commit** na veji (sporočilo v slovenščini, npr. `Tema X.Y.Z: …`), nato združitev: `git checkout main && git pull --ff-only && git merge --ff-only <veja>`; po združitvi še enkrat `bin/test.sh`.
 5. **Push in release** (po potrditvi):

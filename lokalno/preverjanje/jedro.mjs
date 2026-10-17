@@ -21,6 +21,15 @@ export function najdba(kontrola, stopnja, sporocilo, podrobnosti = {}) {
   return { kontrola, stopnja, sporocilo, podrobnosti };
 }
 
+// Chromium se ni zagnal: kontrole v brskalniku (2 konzola, 7, 8, 9) ne smejo miniti brez najdb.
+export function najdbeBrezBrskalnika(vzrok) {
+  const prva = String(vzrok).split('\n')[0];
+  return [
+    najdba(2, 'napaka', `Brskalnik (Chromium) se ni zagnal: ${prva}`),
+    ...[7, 8, 9].map((k) => najdba(k, 'napaka', `Kontrola ${k} se ni izvedla: brskalnik (Chromium) se ni zagnal: ${prva}`)),
+  ];
+}
+
 export function ubezi(s) {
   return String(s).replace(/[&<>"']/g, (z) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[z]));
 }

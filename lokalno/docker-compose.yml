@@ -83,6 +83,7 @@ services:
   brskalnik:
     build: ./preverjanje
     profiles: ["preverjanje"]
+    init: true
     volumes:
       - stanje:/stanje:ro
       - ../dist/preverjanje:/porocilo

@@ -18,7 +18,7 @@ Lokalno ni PHP niti WordPressa; PHP teče prek Dockerja.
 
 ```bash
 bin/lint.sh          # php -l za vse s59dgo/**/*.php v sliki php:8.3-cli
-bin/test.sh          # statični in enotski testi v tests/ (stubi WP funkcij v tests/stubs.php) in Node test jedra generatorja promptov (node:22-alpine)
+bin/test.sh          # statični in enotski testi v tests/ (stubi WP funkcij v tests/stubs.php), Node testa tests/prompti.test.mjs in tests/lokalno.test.mjs (node:22-alpine) ter tests/lokalno.test.sh (bash:5.2)
 bin/phpcs.sh         # PHPCS z WordPress Coding Standards v Dockerju (phpcs.xml.dist); bin/phpcs.sh --fix požene phpcbf
 bin/build-zip.sh     # lint + testi + phpcs + dist/s59dgo.zip za nalaganje v WP administracijo
 bin/screenshot.sh    # regenerira s59dgo/screenshot.png iz bin/screenshot.svg (rsvg-convert v Dockerju)
@@ -45,7 +45,7 @@ Projektni skilli v `.claude/skills/`: `s59dgo-izdaja-teme` (lokalno preverjanje,
 - **Mreža objav** je predloga-del `template-parts/mreza.php`, ki jo uporabljajo `home.php`, `index.php`, `archive.php` in `search.php`; `template-parts/kartica.php` je ena kartica znotraj mreže. Domača stran je WP nastavitev »Zadnje objave«, zato mrežo izriše `home.php`, ne `front-page.php`.
 - `functions.php` samo nalaga `inc/setup.php`, `inc/enqueue.php`, `inc/template-tags.php`, `inc/customizer.php` in `inc/druzbena.php`.
 - **Naslovne slike**: kartice v mreži so vedno 20:13 (velikost `s59dgo-kartica` 800×520, CSS `object-fit: cover`), posamezna objava pokaže celo sliko (`large`). `inc/druzbena.php` izpiše oznake Open Graph/Twitter v `wp_head` (slika `s59dgo-deljenje` 1200×630, sicer `large` ali logotip) in se umakne, če so aktivni Yoast SEO, Rank Math ali Jetpack (filter `s59dgo_druzbena_podatki`). Generator promptov mora slediti tem razmerjem.
-- **Lokalna kopija produkcije** (`lokalno/`, Docker Compose): WordPress in baza tečeta v notranjem omrežju brez interneta, `vrata` (socat) objavi samo `127.0.0.1:8059`, internet ima le `prenos` (jedro WP). Podatki produkcije so samo v `prod_backups/` (gitignore) in volumnih `s59dgo-lokalno_*` ter vsebujejo zasebne podatke (uporabniki, komentarji, wp-config): nikoli `git add` iz teh poti; `bin/lokalno.sh pobrisi` volumne izbriše. Tema se vgradi samo za branje iz `s59dgo/`.
+- **Lokalna kopija produkcije** (`lokalno/`, Docker Compose): WordPress in baza tečeta v notranjem omrežju brez interneta; internet imata le vsebnik `prenos` (jedro WP) in gradnja slike `brskalnik`. `vrata` (socat) je poleg notranjega še v omrežju `objava` (ni `internal`, ker Docker sicer ne objavi porta), objavi samo `127.0.0.1:8059` in posreduje le na `wp:80`. Podatki produkcije so samo v `prod_backups/` (gitignore) in volumnih `s59dgo-lokalno_*` ter vsebujejo zasebne podatke (uporabniki, komentarji, wp-config): nikoli `git add` iz teh poti; `bin/lokalno.sh pobrisi` volumne izbriše. Tema se vgradi samo za branje iz `s59dgo/`.
 - Nastavitvi v Customizerju (`inc/customizer.php`, razdelek Identiteta spletišča): `s59dgo_naslov_doma` in `s59dgo_podnaslov_doma` (prazno = »Novice s Snežnika« / slogan strani). Razvijalske prilagoditvene točke: filtri `s59dgo_naslov_doma`, `s59dgo_podnaslov_doma` in `s59dgo_noga_besedilo`. Tema nima lastnih tipov vsebine ali meta polj.
 
 ## Konvencije

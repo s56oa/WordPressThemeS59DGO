@@ -13,6 +13,13 @@ $storitve  = $deli[0];
 $brez      = preg_replace( '/^  prenos:\n(?:    .*\n|\n)*/m', '', $storitve );
 preveri( false !== strpos( $storitve, 'zunanje' ), 'storitev prenos uporablja omrežje zunanje' );
 preveri( false === strpos( $brez, 'zunanje' ), 'omrežje zunanje je samo v storitvi prenos' );
+// Omrežje »objava« (ni notranje) sme biti le v storitvi vrata, ki posreduje samo na wp:80.
+$brez_vrat = preg_replace( '/^  vrata:\n(?:    .*\n|\n)*/m', '', $storitve );
+preveri( 1 === preg_match( '/^  vrata:\n(?:    .*\n|\n)*?      - objava\n/m', $storitve ), 'storitev vrata uporablja omrežje objava' );
+preveri( false === strpos( $brez_vrat, 'objava' ), 'omrežje objava je samo v storitvi vrata' );
+preveri( false !== strpos( $compose, 'TCP-LISTEN:80,fork,reuseaddr TCP:wp:80' ), 'vrata posredujejo samo na wp:80' );
+preg_match( '/^  brskalnik:\n((?:    .*\n|\n)*)/m', $storitve, $brskalnik );
+preveri( isset( $brskalnik[1] ) && 1 === preg_match( '/^    init: true$/m', $brskalnik[1] ), 'brskalnik ima init: true' );
 preg_match_all( '/^\s*image:\s*(\S+)/m', $compose, $slike );
 foreach ( $slike[1] as $slika ) {
 	if ( 0 === strpos( $slika, 'ghcr.io/validator/validator' ) ) {
@@ -39,6 +46,14 @@ foreach ( array( 's59dgo.si', 's59dgo.org' ) as $domena ) {
 		$zamenjave[] = "'//{$gostitelj}' '//localhost:8059'";
 	}
 }
+// Za tem še poševnice, ubežane v JSON (bloki, nastavitve vtičnikov): https:\/\/… → http:\/\/localhost:8059.
+foreach ( array( 's59dgo.si', 's59dgo.org' ) as $domena ) {
+	foreach ( array( "www.{$domena}", $domena ) as $gostitelj ) {
+		$zamenjave[] = "'https:\\/\\/{$gostitelj}' 'http:\\/\\/localhost:8059'";
+		$zamenjave[] = "'http:\\/\\/{$gostitelj}' 'http:\\/\\/localhost:8059'";
+		$zamenjave[] = "'\\/\\/{$gostitelj}' '\\/\\/localhost:8059'";
+	}
+}
 $odmik = 0;
 foreach ( $zamenjave as $par ) {
 	$najdeno = strpos( $obnovi, $par, $odmik );
@@ -60,6 +75,7 @@ $stanje = (string) @file_get_contents( $koren . 'lokalno/wp/stanje-produkcije.ph
 foreach ( array( "'arhiv'", "'cas_arhiva'", "'jedro'", "'predpona'", "'slike'", "'nastavitve'", "'php_v_uploads'", "'ima_kartica'", "'ima_deljenje'", "'posts_per_page'", "'meni_glavni'", "'logotip'", "'gradniki'", "'tema'" ) as $kljuc ) {
 	preveri( false !== strpos( $stanje, $kljuc ), "stanje-produkcije.php izpiše ključ {$kljuc}" );
 }
+preveri( 1 === preg_match( "/'has_password'\\s*=>\\s*false/", $stanje ), 'stanje-produkcije.php izpusti objave z geslom (kot naslovi.php)' );
 $bin = file_get_contents( $koren . 'bin/lokalno.sh' );
 preveri( false === strpos( $bin, 'še ni izveden' ), 'bin/lokalno.sh izvede ukaz obnovi' );
 preveri( 1 === preg_match( '/run --rm[^\n]* prenos wp core download[^\n]*--locale=sl_SI/', $bin ), 'bin/lokalno.sh prenese jedro v vsebniku prenos (sl_SI)' );
@@ -76,6 +92,23 @@ $kontrole   = strpos( $preveri_sh, 'preveri.mjs' );
 preveri( false !== $izprazni && false !== $kontrole && $izprazni < $kontrole, 'bin/preveri-lokalno.sh izprazni debug.log pred zagonom kontrol' );
 preveri( false !== $naslovi_k && $naslovi_k < $izprazni, 'bin/preveri-lokalno.sh požene WP-CLI (naslovi.php) pred praznjenjem debug.log' );
 preveri( false !== strpos( $preveri_sh, 'preveri_pripravljenost' ), 'bin/preveri-lokalno.sh pokliče preveri_pripravljenost' );
+preveri( false !== strpos( $preveri_sh, 'dc up -d db wp vrata' ), 'bin/preveri-lokalno.sh zažene tudi vrata' );
+$pobrisi_por = strpos( $preveri_sh, 'rm -f dist/preverjanje/porocilo.html dist/preverjanje/najdbe.json' );
+$prvi_pogoj  = strpos( $preveri_sh, 'preveri_docker' );
+preveri( false !== $pobrisi_por && false !== $prvi_pogoj && $pobrisi_por < $prvi_pogoj, 'bin/preveri-lokalno.sh pobriše staro poročilo pred prvim preverjanjem' );
+$gradnja = strpos( $preveri_sh, 'dc --profile preverjanje build brskalnik' );
+$zagon   = strpos( $preveri_sh, 'run --rm -T brskalnik' );
+preveri( false !== $gradnja && false !== $zagon && $gradnja < $zagon, 'bin/preveri-lokalno.sh zgradi brskalnik pred zagonom' );
+preveri( false !== strpos( $preveri_sh, 'preveri_vrata' ), 'bin/preveri-lokalno.sh preveri port pred zagonom vrat' );
+// Port preverjajo samo ukazi, ki zaženejo vrata; dol in pobrisi ne.
+preveri( 1 === preg_match( '/^preveri_docker \|\| exit 1$/m', $bin ), 'bin/lokalno.sh preveri Docker za vse ukaze' );
+foreach ( array( 'gor', 'odpri', 'obnovi' ) as $ukaz ) {
+	preveri( 1 === preg_match( '/^  ' . $ukaz . '\)\n    preveri_vrata \|\| exit 1$/m', $bin ), "bin/lokalno.sh {$ukaz} preveri port" );
+}
+foreach ( array( 'dol', 'pobrisi' ) as $ukaz ) {
+	preveri( 1 === preg_match( '/^  ' . $ukaz . '\)\n((?:    .*\n)*)/m', $bin, $veja ) && false === strpos( $veja[1], 'preveri_vrata' ), "bin/lokalno.sh {$ukaz} ne preverja porta" );
+}
+preveri( 1 === preg_match( '/^  odpri\)\n(?:    .*\n)*?    dc up -d db wp vrata\n(?:    .*\n)*?    open /m', $bin ), 'bin/lokalno.sh odpri zažene db, wp in vrata pred open' );
 foreach ( array( 'stanje:/stanje:ro', '../dist/preverjanje:/porocilo', './preverjanje:/opt/preverjanje/src:ro' ) as $iskano ) {
 	preveri( false !== strpos( $compose, $iskano ), "docker-compose.yml (brskalnik) vsebuje {$iskano}" );
 }
@@ -118,3 +151,11 @@ foreach ( array( 'bin/preveri-lokalno.sh', 'bin/lokalno.sh', 'prod_backups/', 'h
 preveri( false !== strpos( $readme, 'bin/preveri-lokalno.sh' ) && false !== strpos( $readme, 'zasebne podatke' ), 'README.md opisuje lokalno preverjanje in zasebne podatke' );
 preveri( false !== strpos( $skill, 'bin/preveri-lokalno.sh' ) && false !== strpos( $skill, 'prod_backups/' ), 'SKILL.md izdaje vsebuje bin/preveri-lokalno.sh in prod_backups/' );
 preveri( strpos( $skill, 'bin/preveri-lokalno.sh' ) < strpos( $skill, '**Preverjanje in zip**' ), 'SKILL.md: lokalno preverjanje je pred korakom Preverjanje in zip' );
+preveri( false !== strpos( $skill, 'izhodni kodi ≠ 0' ) && false === strpos( $skill, 'izhodni kodi 1' ), 'SKILL.md: izdaja se ustavi ob vsaki izhodni kodi ≠ 0' );
+foreach ( array( 'CLAUDE.md' => $claude, 'README.md' => $readme ) as $ime => $besedilo ) {
+	preveri( 1 === preg_match( '/^bin\/test\.sh .*tests\/lokalno\.test\.mjs.*tests\/lokalno\.test\.sh.*bash:5\.2/m', $besedilo ), "{$ime}: bin/test.sh omeni tests/lokalno.test.mjs in tests/lokalno.test.sh (bash:5.2)" );
+}
+preveri( false !== strpos( $claude, 'gradnja slike `brskalnik`' ) && false !== strpos( $claude, 'objava' ) && false !== strpos( $claude, 'wp:80' ), 'CLAUDE.md: internet le za prenos in gradnjo brskalnika, vrata na objava samo do wp:80' );
+$spec = (string) @file_get_contents( $koren . 'docs/superpowers/specs/2026-10-17-s59dgo-lokalni-wordpress-design.md' );
+$odd9 = (string) strstr( $spec, '## 9.' );
+preveri( 1 === preg_match( '/[Kk]ontrola 8[^\n]*posnet[^\n]*`napaka`/', $odd9 ), 'specifikacija §9: kontrola 8 javi neuspel posnetek kot napaka' );

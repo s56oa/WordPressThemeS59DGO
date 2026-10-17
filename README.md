@@ -42,7 +42,7 @@ Lokalno ni potreben ne PHP ne WordPress; orodja tečejo v Dockerju.
 
 ```bash
 bin/lint.sh          # sintaksa JS (node --check) in PHP (php -l v php:8.3-cli)
-bin/test.sh          # statični in enotski testi v tests/ (stubi WP funkcij v tests/stubs.php)
+bin/test.sh          # statični in enotski testi v tests/ (stubi WP funkcij v tests/stubs.php), Node testa tests/prompti.test.mjs in tests/lokalno.test.mjs (node:22-alpine) ter tests/lokalno.test.sh (bash:5.2)
 bin/phpcs.sh         # PHP_CodeSniffer z WordPress Coding Standards; --fix požene phpcbf
 bin/screenshot.sh    # regenerira s59dgo/screenshot.png iz bin/screenshot.svg
 bin/build-zip.sh     # lint + testi + phpcs + dist/s59dgo.zip

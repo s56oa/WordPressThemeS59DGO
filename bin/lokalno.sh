@@ -20,6 +20,7 @@ preveri_docker || exit 1
 
 case "$ukaz" in
   gor)
+    preveri_vrata || exit 1
     dc up -d db wp vrata
     echo "Lokalni WordPress: http://localhost:${S59DGO_VRATA}"
     ;;
@@ -27,6 +28,8 @@ case "$ukaz" in
     dc --profile preverjanje down
     ;;
   odpri)
+    preveri_vrata || exit 1
+    dc up -d db wp vrata
     open http://localhost:${S59DGO_VRATA}
     ;;
   pobrisi)
@@ -38,6 +41,7 @@ case "$ukaz" in
     fi
     ;;
   obnovi)
+    preveri_vrata || exit 1
     if [ $# -ge 2 ]; then
       arhiv="$2"
     else

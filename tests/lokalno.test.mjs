@@ -1,7 +1,7 @@
 // Test jedra preverjanja lokalnega WordPressa (lokalno/preverjanje/jedro.mjs): čista logika brez I/O.
 import assert from 'node:assert/strict';
 import {
-  najdba, odkrijNaslove, delezObreza, razvrstiSliko, jeIzrezKartice, preveriOg,
+  najdba, najdbeBrezBrskalnika, odkrijNaslove, delezObreza, razvrstiSliko, jeIzrezKartice, preveriOg,
   razvrstiZahtevo, razvrstiKonzolo, noveNajdbe, povzetek, porociloHtml, razkodiEntitete, oblikujDelez,
 } from '../lokalno/preverjanje/jedro.mjs';
 import {
@@ -433,5 +433,11 @@ await rm(mapa8, { recursive: true, force: true });
 // Izdana tema se ne izriše → napaka, brez lažne primerjave.
 r = await kontrola8({ naslovi: naslovi8.slice(0, 1), osnova: O, mapaPorocila: await mkdtemp(join(tmpdir(), 's59dgo-k8-')), obisci: obisk({ html: '<link href="/wp-content/themes/s59dgo/style.css">', posnetek: posn([1, 1]) }), slike: { ...kodek, pixelmatch: lazniPm } });
 ok(r.length === 1 && r[0].stopnja === 'napaka' && r[0].sporocilo.includes('s59dgo-izdana'), 'kontrola8: izdana tema ni izrisana = napaka');
+
+// Chromium se ne zažene: vsaka kontrola v brskalniku (2, 7, 8, 9) je napaka, nobena ne mine tiho.
+r = najdbeBrezBrskalnika('Executable doesn\'t exist\nvrstica 2');
+ok(JSON.stringify(r.map((x) => x.kontrola)) === '[2,7,8,9]', 'brez brskalnika: najdbe za kontrole 2, 7, 8, 9');
+ok(r.every((x) => x.stopnja === 'napaka' && x.sporocilo.includes('Executable doesn\'t exist') && !x.sporocilo.includes('vrstica 2')), 'brez brskalnika: napaka s prvo vrstico vzroka');
+ok(r.filter((x) => x.kontrola !== 2).every((x) => x.sporocilo.includes(`Kontrola ${x.kontrola} se ni izvedla`)), 'brez brskalnika: 7, 8, 9 »se ni izvedla«');
 
 console.log(`lokalno.test.mjs: ${stevilo} preverjanj OK`);

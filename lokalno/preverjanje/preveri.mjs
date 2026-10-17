@@ -3,7 +3,7 @@
 // zapiše /porocilo/porocilo.html in /porocilo/najdbe.json ter natisne povzetek.
 import { readFile, writeFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
-import { najdba, odkrijNaslove, povzetek, porociloHtml, razkodiEntitete, NASLOVI_KONTROL } from './jedro.mjs';
+import { najdba, najdbeBrezBrskalnika, odkrijNaslove, povzetek, porociloHtml, razkodiEntitete, NASLOVI_KONTROL } from './jedro.mjs';
 import { kontrola2, kontrola2Dnevnik, kontrola4, kontrola5, kontrola6 } from './kontrole-streznik.mjs';
 import { kontrola1, kontrola3 } from './kontrole-vsebina.mjs';
 import { kontrola2Konzola, kontrola7, kontrola8, kontrola9 } from './kontrole-brskalnik.mjs';
@@ -18,7 +18,7 @@ const kontekst = { naslovi, podatki, stanje, osnova: OSNOVA, mapaPorocila: '/por
 try {
   kontekst.brskalnik = await chromium.launch();
 } catch (e) {
-  najdbe.push(najdba(2, 'napaka', `Brskalnik (Chromium) se ni zagnal: ${e.message.split('\n')[0]}`));
+  najdbe.push(...najdbeBrezBrskalnika(e.message));
 }
 
 const kontrole = [[1, kontrola1], [2, kontrola2], [3, kontrola3], [4, kontrola4], [5, kontrola5], [6, kontrola6]];

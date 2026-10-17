@@ -242,3 +242,5 @@ produkcijo.
   `stanje-produkcije.json` (po pregledu izvajalca).
 - `.php` v `uploads/` se skopira, a izpiše kot opozorilo.
 - V poročilo (mapa v Synology Drive) gredo samo objavljene objave in strani.
+- Kontrola 8 javi neuspel posnetek ali neizrisano izdano temo (`s59dgo-izdana`) kot `napaka`:
+  pokvarjena kontrola ne sme miniti. Enako je `napaka`, če se Chromium ne zažene (kontrole 2, 7, 8, 9).

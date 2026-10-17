@@ -21,6 +21,7 @@ $s59dgo_objave  = get_posts(
 	array(
 		'post_type'      => 'post',
 		'post_status'    => 'publish',
+		'has_password'   => false,
 		'posts_per_page' => -1,
 		'meta_key'       => '_thumbnail_id', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 		'orderby'        => 'ID',
