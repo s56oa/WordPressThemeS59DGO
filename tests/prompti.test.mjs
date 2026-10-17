@@ -137,5 +137,11 @@ ok(!nezamenjano(r.pozitivni) && r.pozitivni.includes('--ar 4:5'), 'uvoz: nevelja
 const vNaslovna = J.privzeto(P, naslovna); vNaslovna.elementi.plasti = 7; vNaslovna.elementi.sonce = 'x'; vNaslovna.elementi.ozadje = 'x';
 ok(!nezamenjano(J.sestavi(P, 'naslovna', vNaslovna, nast('sl', 'univerzalno')).pozitivni), 'neveljavni elementi → privzeti');
 
+// 6. Midjourney: prelom vrstice v daljšem polju ne sme razbiti enovrstičnega prompta.
+const plakat = J.predloga(P, 'plakat');
+const vPl = J.primer(P, plakat, 'en'); vPl.polja.opis = 'Prva vrstica\nDruga vrstica';
+r = J.sestavi(P, 'plakat', vPl, nast('en', 'midjourney'));
+ok(!r.pozitivni.includes('\n') && r.pozitivni.includes('"Prva vrstica Druga vrstica"'), 'Midjourney: prelomi vrstic v vnosu postanejo presledki');
+
 // TESTI-NAPREJ (naslednje naloge dodajo teste nad to vrstico)
 console.log('OK: prompti.test.mjs, ' + stevilo + ' preverjanj');

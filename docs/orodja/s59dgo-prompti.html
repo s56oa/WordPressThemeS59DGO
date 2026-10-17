@@ -2886,7 +2886,8 @@ legend{padding:0;margin-bottom:6px}
     if (o.zakljucek) deli.push(o.zakljucek[j]);
     let pozitivni;
     if (idOrodja === 'midjourney') {
-      pozitivni = deli.join(' ');
+      // Midjourney sprejme prompt le v eni vrstici: prelomi iz daljših polj postanejo presledki.
+      pozitivni = deli.join(' ').replace(/\s+/g, ' ');
       if (n.ne) pozitivni += ' --no ' + MJ_NO.filter(x => !(p.tipo && (x === 'text' || x === 'letters'))).join(', ');
       pozitivni += ' --ar ' + r.e.format.ar + ' --style raw --stylize 50';
     } else {
