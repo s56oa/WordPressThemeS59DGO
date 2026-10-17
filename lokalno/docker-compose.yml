@@ -28,6 +28,7 @@ services:
     volumes:
       - html:/var/www/html
       - ../s59dgo:/var/www/html/wp-content/themes/s59dgo:ro
+      - ./mu-plugins/s59dgo-lokalno.php:/var/www/html/wp-content/mu-plugins/s59dgo-lokalno.php:ro
       - stanje:/stanje
     networks:
       - notranje
@@ -56,8 +57,11 @@ services:
     volumes:
       - html:/var/www/html
       - ../s59dgo:/var/www/html/wp-content/themes/s59dgo:ro
+      - ./mu-plugins/s59dgo-lokalno.php:/var/www/html/wp-content/mu-plugins/s59dgo-lokalno.php:ro
       - stanje:/stanje
       - ../prod_backups:/backup:ro
+      - ./obnovi.sh:/lokalno/obnovi.sh:ro
+      - ./wp:/lokalno-wp:ro
     networks:
       - notranje
 
