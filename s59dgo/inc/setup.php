@@ -17,6 +17,7 @@ function s59dgo_nastavitve() {
 	add_theme_support( 'automatic-feed-links' );
 	add_theme_support( 'post-thumbnails' );
 	add_image_size( 's59dgo-kartica', 800, 520, true );
+	add_image_size( 's59dgo-deljenje', 1200, 630, true );
 	add_theme_support(
 		'custom-logo',
 		array(

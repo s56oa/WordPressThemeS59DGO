@@ -3,7 +3,7 @@ Contributors: s56oa
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Tags: blog, one-column, custom-logo, custom-menu, featured-images, threaded-comments, translation-ready, wide-blocks
@@ -33,6 +33,11 @@ Vključeni viri:
 * assets/img/greben.svg in screenshot.png – avtorsko delo teme, GPLv2 ali novejša
 
 == Changelog ==
+
+= 1.2.0 =
+* Oznake Open Graph in Twitter za deljenje na družbenih omrežjih (naslovna slika v izrezu 1200×630, sicer logotip strani); tema se umakne, če jih izpisuje Yoast SEO, Rank Math ali Jetpack.
+* Nova velikost slike s59dgo-deljenje (1200×630). Za obstoječe slike enkrat poženi vtičnik »Regenerate Thumbnails«.
+* Spletni naslov teme in avtorja je www.s59dgo.si.
 
 = 1.1.0 =
 * Naslov in podnaslov domače strani sta nastavljiva v Videz → Prilagodi → Identiteta spletišča.

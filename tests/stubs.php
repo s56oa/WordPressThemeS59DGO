@@ -21,6 +21,9 @@ $GLOBALS['s59dgo_test'] = array(
 	'has_thumbnail'       => false,
 	'date'                => '2026-07-08',
 	'theme_mods'          => array(),
+	'excerpt'             => '',
+	'slike'               => array(),
+	'alt'                 => '',
 	'bloginfo'            => array(
 		'name'        => 'Radio klub Snežnik',
 		'description' => 'Ilirska Bistrica · S59DGO',
@@ -36,6 +39,7 @@ function s59dgo_test_ponastavi( array $prepisi = array() ) {
 		'is_singular' => false, 'is_single' => false, 'search_query' => '', 'found_posts' => 0,
 		'title' => '', 'archive_title' => '', 'archive_description' => '', 'categories' => array(),
 		'has_thumbnail' => false, 'date' => '2026-07-08', 'theme_mods' => array(),
+		'excerpt' => '', 'slike' => array(), 'alt' => '',
 		'bloginfo' => array( 'name' => 'Radio klub Snežnik', 'description' => 'Ilirska Bistrica · S59DGO' ),
 	);
 	$GLOBALS['s59dgo_test'] = array_merge( $privzeto, $prepisi );
@@ -70,6 +74,14 @@ function number_format_i18n( $stevilo ) { return (string) $stevilo; }
 function wp_strip_all_tags( $niz ) { return trim( strip_tags( (string) $niz ) ); }
 function get_theme_mod( $kljuc, $privzeto = false ) { $m = s59dgo_t( 'theme_mods' ); return isset( $m[ $kljuc ] ) ? $m[ $kljuc ] : $privzeto; }
 function get_permalink() { return 'https://example.test/objava/'; }
+function is_front_page() { return false; }
+function home_url( $pot = '' ) { return 'https://example.test' . $pot; }
+function get_the_excerpt() { return s59dgo_t( 'excerpt' ); }
+function get_post_thumbnail_id() { return 5; }
+function wp_get_attachment_image_src( $id, $velikost = 'thumbnail' ) { $s = s59dgo_t( 'slike' ); return isset( $s[ $velikost ] ) ? $s[ $velikost ] : false; }
+function get_post_meta( $id, $kljuc = '', $en = false ) { return s59dgo_t( 'alt' ); }
+function wp_trim_words( $besedilo, $stevilo = 55, $vec = '…' ) { $b = preg_split( '/\s+/', trim( (string) $besedilo ) ); return count( $b ) > $stevilo ? implode( ' ', array_slice( $b, 0, $stevilo ) ) . $vec : implode( ' ', $b ); }
+function add_action( $kljuka, $funkcija, $prednost = 10, $argumenti = 1 ) { return true; }
 
 define( 'S59DGO_URI', 'https://example.test/wp-content/themes/s59dgo' );
 s59dgo_test_ponastavi();

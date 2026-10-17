@@ -1,6 +1,6 @@
 # S59DGO – WordPress tema Radio kluba Snežnik Ilirska Bistrica
 
-Klasična WordPress tema za [www.s59dgo.org](https://www.s59dgo.org/), spletno stran Radio kluba Snežnik Ilirska Bistrica (S59DGO, ustanovljen 1964).
+Klasična WordPress tema za [www.s59dgo.si](https://www.s59dgo.si/), spletno stran Radio kluba Snežnik Ilirska Bistrica (S59DGO, ustanovljen 1964).
 
 **English summary.** A classic WordPress theme for the website of the Snežnik amateur radio club (S59DGO), Ilirska Bistrica, Slovenia. Dark-navy sticky header with a mountain-ridge band, a responsive grid of post cards, single-column posts and pages, footer widget areas, system-driven dark mode, locally hosted fonts (Space Grotesk, IBM Plex Sans) and no build step. Requires WordPress 6.4+ and PHP 7.4+. Install by uploading `dist/s59dgo.zip` (see Releases) through *Appearance → Themes → Add New → Upload*. Licensed under GPLv2 or later. The UI strings are Slovenian and translation-ready (text domain `s59dgo`).
 
@@ -74,4 +74,4 @@ GPLv2 ali novejša (glej `LICENSE`). Pisavi Space Grotesk (Florian Karsten) in I
 
 ---
 
-Radio klub Snežnik Ilirska Bistrica · S59DGO · [www.s59dgo.org](https://www.s59dgo.org/)
+Radio klub Snežnik Ilirska Bistrica · S59DGO · [www.s59dgo.si](https://www.s59dgo.si/)

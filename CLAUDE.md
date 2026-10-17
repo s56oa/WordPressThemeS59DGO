@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Kaj je to
 
-Klasična WordPress tema `s59dgo` za www.s59dgo.org (Radio klub Snežnik Ilirska Bistrica, S59DGO). Tema živi v podmapi `s59dgo/`; koren repozitorija nosi orodja (`bin/`) in dokumentacijo (`docs/`). Komunikacija z naročnikom in nizi v temi so v slovenščini.
+Klasična WordPress tema `s59dgo` za www.s59dgo.si (Radio klub Snežnik Ilirska Bistrica, S59DGO). Tema živi v podmapi `s59dgo/`; koren repozitorija nosi orodja (`bin/`) in dokumentacijo (`docs/`). Komunikacija z naročnikom in nizi v temi so v slovenščini.
 
 Potrjen dizajn: `docs/superpowers/specs/2026-09-09-s59dgo-wordpress-theme-design.md`. Vizualna referenca (smer »Grebeni«): https://claude.ai/code/artifact/ee9e3cd9-3f7a-4423-8d20-946d153fc80b
 
@@ -28,7 +28,7 @@ bin/prompti-pisave.sh     # vdela pisave teme kot base64 v docs/orodja/s59dgo-pr
 
 Nov test: `tests/test-<ime>.php`, ki vključi `tests/preveri.php` (in `tests/stubs.php` za funkcije iz `inc/`).
 
-Preizkus poteka na strežniku: zip naloži kot neaktivno temo, preglej prek Videz → Teme → »Predogled v živo«, aktiviraj šele po pregledu. Pred aktivacijo: dodeli meni lokaciji »Glavni meni«, nastavi logotip, napolni gradnike noge (`noga-1..3`), Nastavitve → Branje → 9 objav na stran.
+Preizkus poteka na strežniku: zip naloži kot neaktivno temo, preglej prek Videz → Teme → »Predogled v živo«, aktiviraj šele po pregledu. Pred aktivacijo: dodeli meni lokaciji »Glavni meni«, nastavi logotip, napolni gradnike noge (`noga-1..3`), Nastavitve → Branje → 9 objav na stran. Po posodobitvi na 1.2.0 enkrat poženi vtičnik »Regenerate Thumbnails«, da dobijo obstoječe slike izreza 800×520 in 1200×630.
 
 ## Arhitektura
 
@@ -36,7 +36,8 @@ Preizkus poteka na strežniku: zip naloži kot neaktivno temo, preglej prek Vide
 - **`theme.json` ima samo `settings`** (paleta, pisave, velikosti, `contentSize`/`wideSize`). Brez `styles` in brez Site Editorja; postavitev določajo PHP predloge.
 - **Trak z grebenom** (`template-parts/trak.php` + `s59dgo_trak_podatki()` v `inc/template-tags.php`) je edini kontekstno odvisen del: vsebino izbere glede na `is_home()/is_archive()/is_search()/is_singular()/is_404()`. `header.php` ga vključi enkrat, za vse predloge.
 - **Mreža objav** je predloga-del `template-parts/mreza.php`, ki jo uporabljajo `home.php`, `index.php`, `archive.php` in `search.php`; `template-parts/kartica.php` je ena kartica znotraj mreže. Domača stran je WP nastavitev »Zadnje objave«, zato mrežo izriše `home.php`, ne `front-page.php`.
-- `functions.php` samo nalaga `inc/setup.php`, `inc/enqueue.php`, `inc/template-tags.php`.
+- `functions.php` samo nalaga `inc/setup.php`, `inc/enqueue.php`, `inc/template-tags.php`, `inc/customizer.php` in `inc/druzbena.php`.
+- **Naslovne slike**: kartice v mreži so vedno 20:13 (velikost `s59dgo-kartica` 800×520, CSS `object-fit: cover`), posamezna objava pokaže celo sliko (`large`). `inc/druzbena.php` izpiše oznake Open Graph/Twitter v `wp_head` (slika `s59dgo-deljenje` 1200×630, sicer `large` ali logotip) in se umakne, če so aktivni Yoast SEO, Rank Math ali Jetpack (filter `s59dgo_druzbena_podatki`). Generator promptov mora slediti tem razmerjem.
 - Nastavitvi v Customizerju (`inc/customizer.php`, razdelek Identiteta spletišča): `s59dgo_naslov_doma` in `s59dgo_podnaslov_doma` (prazno = »Novice s Snežnika« / slogan strani). Razvijalske prilagoditvene točke: filtri `s59dgo_naslov_doma`, `s59dgo_podnaslov_doma` in `s59dgo_noga_besedilo`. Tema nima lastnih tipov vsebine ali meta polj.
 
 ## Konvencije
