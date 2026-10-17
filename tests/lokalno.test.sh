@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Testi skupnih funkcij lokalno/lib.sh (najnovejsi_arhiv, preveri_docker).
+set -euo pipefail
+cd "$(dirname "$0")/.."
+# shellcheck source=../lokalno/lib.sh
+source lokalno/lib.sh
+
+napaka() { echo "NEUSPEH: $1" >&2; exit 1; }
+
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+
+touch "$tmp/star arhiv.tar.gz" "$tmp/nov.tar.gz"
+touch -t 202601010000 "$tmp/star arhiv.tar.gz"
+izpis="$(najnovejsi_arhiv "$tmp")"
+[ "$izpis" = "$tmp/nov.tar.gz" ] || napaka "najnovejsi_arhiv: dobil '$izpis'"
+echo "OK: najnovejsi_arhiv izbere najnovejši arhiv"
+
+# Presledek v imenu najnovejšega
+touch -t 202602020000 "$tmp/star arhiv.tar.gz"
+touch -t 202601010000 "$tmp/nov.tar.gz"
+izpis="$(najnovejsi_arhiv "$tmp")"
+[ "$izpis" = "$tmp/star arhiv.tar.gz" ] || napaka "najnovejsi_arhiv s presledkom: dobil '$izpis'"
+echo "OK: najnovejsi_arhiv prenese presledek v imenu"
+
+prazna="$(mktemp -d "$tmp/prazna.XXXXXX")"
+if najnovejsi_arhiv "$prazna" >/dev/null; then napaka "najnovejsi_arhiv v prazni mapi bi moral vrniti 1"; fi
+echo "OK: najnovejsi_arhiv v prazni mapi vrne 1"
+
+docker() { return 1; }
+if izpis="$(preveri_docker 2>&1)"; then napaka "preveri_docker bi moral vrniti 1"; fi
+case "$izpis" in *"Docker ne teče"*) ;; *) napaka "preveri_docker: sporočilo '$izpis'";; esac
+echo "OK: preveri_docker javi, da Docker ne teče"

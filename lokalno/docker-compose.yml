@@ -1,0 +1,96 @@
+# Lokalna kopija produkcije za preverjanje teme. Zagon: bin/lokalno.sh gor
+name: s59dgo-lokalno
+
+services:
+  db:
+    image: mariadb:10.11
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: wordpress
+      MARIADB_USER: wordpress
+      MARIADB_PASSWORD: wordpress
+      MARIADB_RANDOM_ROOT_PASSWORD: "1"
+    volumes:
+      - baza:/var/lib/mysql
+    networks:
+      - notranje
+
+  wp:
+    image: wordpress:php8.5-apache
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+    volumes:
+      - html:/var/www/html
+      - ../s59dgo:/var/www/html/wp-content/themes/s59dgo:ro
+      - stanje:/stanje
+    networks:
+      - notranje
+
+  # Docker ne objavi portov vsebnikov, ki so samo v notranjem omrežju, zato
+  # wp doseže brskalnik prek te prosojne posredniške povezave (samo TCP).
+  vrata:
+    image: alpine/socat:1.8.0.1
+    restart: unless-stopped
+    command: TCP-LISTEN:80,fork,reuseaddr TCP:wp:80
+    depends_on:
+      - wp
+    ports:
+      - "127.0.0.1:8080:80"
+    networks:
+      - notranje
+      - objava
+
+  cli:
+    image: wordpress:cli-php8.5
+    profiles: ["orodja"]
+    depends_on:
+      - db
+    environment:
+      WORDPRESS_DB_HOST: db
+    volumes:
+      - html:/var/www/html
+      - ../s59dgo:/var/www/html/wp-content/themes/s59dgo:ro
+      - stanje:/stanje
+      - ../prod_backups:/backup:ro
+    networks:
+      - notranje
+
+  # Edini vsebnik z internetom: prenese jedro WordPressa.
+  prenos:
+    image: wordpress:cli-php8.5
+    profiles: ["orodja"]
+    volumes:
+      - html:/var/www/html
+    networks:
+      - zunanje
+
+  validator:
+    image: ghcr.io/validator/validator:latest
+    profiles: ["preverjanje"]
+    networks:
+      - notranje
+
+  brskalnik:
+    build: ./preverjanje
+    profiles: ["preverjanje"]
+    volumes:
+      - stanje:/stanje:ro
+    networks:
+      - notranje
+
+networks:
+  notranje:
+    internal: true
+  zunanje: {}
+  objava: {}
+
+volumes:
+  html:
+  baza:
+  stanje:
