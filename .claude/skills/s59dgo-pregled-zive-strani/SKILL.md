@@ -7,6 +7,8 @@ description: Pregled žive strani www.s59dgo.si s Claude in Chrome – naslovne 
 
 Cilj je primerjati, kar tema in orodja predvidevajo, s tem, kar je dejansko na strani, in uporabniku dati seznam ukrepov, ki jih naredi sam v WP administraciji (Claude se v WP ne prijavlja in ne ureja vsebine).
 
+Večino tega (izrezi slik, Open Graph, nastavitve, posnetki, dostopnost) samodejno preveri `bin/preveri-lokalno.sh` na lokalni kopiji iz backupa Backuply (`prod_backups/`); poročilo `dist/preverjanje/porocilo.html` in njegov seznam ročnih korakov uporabi kot izhodišče. Pregled v Chromu je potreben za to, česar lokalna kopija nima: stanje po namestitvi (ali je nova verzija res aktivna, ali je bil pognan Regenerate Thumbnails), `.htaccess` in nastavitve strežnika, vsebina, objavljena po zadnjem backupu.
+
 ## Kaj tema predvideva
 
 - Kartice (domača stran, arhivi, iskanje): velikost `s59dgo-kartica` 800×520 (20:13), CSS `aspect-ratio: 800/520; object-fit: cover` → slika se vedno obreže na sredini.

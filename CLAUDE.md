@@ -35,6 +35,8 @@ Preizkus poteka na strežniku: zip naloži kot neaktivno temo, preglej prek Vide
 
 Lokalna kopija produkcije: `bin/lokalno.sh obnovi` iz najnovejšega arhiva Backuply v `prod_backups/` (ali podanega) postavi WordPress na `http://localhost:8059` (8080 zaseda drug projekt) in izpiše enkratno geslo za lokalnega skrbnika `lokalni`; novo geslo dobiš z ponovnim `obnovi`. `bin/preveri-lokalno.sh` brez ponovne obnove traja ≈ 1 min in zapiše `dist/preverjanje/porocilo.html`, `najdbe.json` in `posnetki/`; najdbe so `napaka` (izhod 1), `opozorilo` ali `ročni korak`, tema se primerja z zadnjim git tagom (lokalna tema `s59dgo-izdana`).
 
+`AGENTS.md` (ni v gitu) je kopija tega dokumenta za Codex; ob spremembi `CLAUDE.md` jo posodobi.
+
 Projektni skilli v `.claude/skills/`: `s59dgo-izdaja-teme` (lokalno preverjanje, verzija, zip, merge, tag, GitHub release, namestitev), `s59dgo-generator-promptov` (urejanje in ponovna objava generatorja), `s59dgo-pregled-zive-strani` (crosscheck www.s59dgo.si s Claude in Chrome).
 
 ## Arhitektura

@@ -2,7 +2,7 @@
 
 Klasična WordPress tema za [www.s59dgo.si](https://www.s59dgo.si/), spletno stran Radio kluba Snežnik Ilirska Bistrica (S59DGO, ustanovljen 1964).
 
-**English summary.** A classic WordPress theme for the website of the Snežnik amateur radio club (S59DGO), Ilirska Bistrica, Slovenia. Dark-navy sticky header with a mountain-ridge band, a responsive grid of post cards, single-column posts and pages, footer widget areas, system-driven dark mode, locally hosted fonts (Space Grotesk, IBM Plex Sans) and no build step. Requires WordPress 6.4+ and PHP 7.4+. Install by uploading `dist/s59dgo.zip` (see Releases) through *Appearance → Themes → Add New → Upload*. Licensed under GPLv2 or later. The UI strings are Slovenian and translation-ready (text domain `s59dgo`).
+**English summary.** A classic WordPress theme for the website of the Snežnik amateur radio club (S59DGO), Ilirska Bistrica, Slovenia. Dark-navy sticky header with a mountain-ridge band, a responsive grid of post cards, single-column posts and pages, footer widget areas, Open Graph/Twitter sharing tags, system-driven dark mode, locally hosted fonts (Space Grotesk, IBM Plex Sans) and no build step. Requires WordPress 6.4+ and PHP 7.4+. Install by uploading `dist/s59dgo.zip` (see Releases) through *Appearance → Themes → Add New → Upload*. Licensed under GPLv2 or later. The UI strings are Slovenian and translation-ready (text domain `s59dgo`).
 
 ![Predogled teme](s59dgo/screenshot.png)
 
@@ -10,9 +10,10 @@ Klasična WordPress tema za [www.s59dgo.si](https://www.s59dgo.si/), spletno str
 
 - Temno modra prilepljena glava z logotipom, imenom kluba in menijem (hamburger na mobilnih napravah, podmeniji).
 - Trak z grebenom Snežnika, ki nosi naslov strani; na domači strani nastavljiv naslov in podnaslov.
-- Mreža objav s slikami, značko kategorije in datumom: 3 stolpci na namizju, 2 na tablici, 1 na telefonu.
+- Mreža objav s slikami, značko kategorije in datumom: 3 stolpci na namizju, 2 na tablici, 1 na telefonu. Slike kartic so vedno 20:13 (izrez 800×520).
 - Enostolpne objave in strani z omejeno širino besedila, široke in polne poravnave blokov.
 - Noga s tremi območji gradnikov (kontakt, uradne ure, podpora).
+- Oznake Open Graph in Twitter za deljenje na omrežjih (slika 1200×630); tema se umakne, če jih izpisuje Yoast SEO, Rank Math ali Jetpack.
 - Temni način sledi nastavitvi sistema (`prefers-color-scheme`).
 - Pisavi Space Grotesk in IBM Plex Sans gostovani v temi (brez zunanjih klicev, SIL OFL).
 - Brez build koraka: čisti CSS s spremenljivkami in nekaj vrstic JavaScripta.
@@ -34,7 +35,9 @@ Klasična WordPress tema za [www.s59dgo.si](https://www.s59dgo.si/), spletno str
 
 ### Nadgradnja
 
-Zgradite nov zip (pred tem dvignite `Version` v `s59dgo/style.css` in `Stable tag` v `s59dgo/readme.txt`), ga naložite prek *Videz → Teme → Naloži temo* in potrdite **Zamenjaj trenutno z naloženo**. Nastavitve, meni in gradniki se ohranijo.
+Zgradite nov zip (pred tem dvignite `Version` v `s59dgo/style.css` in `Stable tag` v `s59dgo/readme.txt`), ga naložite prek *Videz → Teme → Naloži temo* in potrdite **Zamenjaj trenutno z naloženo**. Nastavitve, meni in gradniki se ohranijo. Pred nalaganjem temo preverite na lokalni kopiji produkcije (glej *Lokalno preverjanje*).
+
+Ob nadgradnji na 1.2.0 enkrat poženite vtičnik **Regenerate Thumbnails**, da obstoječe slike dobijo izreza 800×520 (kartice) in 1200×630 (deljenje).
 
 ## Razvoj
 
@@ -67,13 +70,16 @@ Struktura:
 s59dgo/                 tema (slug, text domain in prefiks funkcij: s59dgo)
 ├── style.css           glava teme, @font-face in vsi slogi (CSS spremenljivke --barva-*)
 ├── theme.json          samo settings (paleta, pisave, velikosti, širine)
-├── functions.php       nalaga inc/setup.php, enqueue.php, template-tags.php, customizer.php
+├── functions.php       nalaga inc/setup.php, enqueue.php, template-tags.php, customizer.php, druzbena.php (Open Graph)
 ├── header.php          glava; na koncu vključi template-parts/trak.php
 ├── home.php, index.php, archive.php, search.php   → template-parts/mreza.php (mreža objav)
 ├── single.php, page.php, 404.php, comments.php, searchform.php, footer.php
 ├── template-parts/     trak, kartica, mreza, vsebina-objava, vsebina-stran
 └── assets/             fonts/ (woff2 + licenci), js/navigation.js, css/editor.css, img/greben.svg
-docs/superpowers/       spec dizajna in načrt implementacije
+bin/                    orodja (Docker): lint, testi, phpcs, zip, lokalna kopija produkcije in preverjanje
+lokalno/                Docker Compose lokalne kopije, obnova iz backupa, kontrole v brskalniku (preverjanje/)
+docs/                   AI predloge za grafiko, referenčna grafika, generator promptov (orodja/)
+docs/superpowers/       speci dizajna in načrti implementacije
 tests/                  testi, ki tečejo brez WordPressa
 ```
 

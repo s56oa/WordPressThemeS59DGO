@@ -15,10 +15,10 @@ Tema je v produkciji na www.s59dgo.si (prej .org, preusmeritev od 2026-09-13). N
 
 ## Koraki
 
-1. **Verzija** (semver: nova funkcija = minor, popravek = patch):
+1. **Verzija** (semver: nova funkcija = minor, popravek = patch). Najprej `git tag`: če sta `Version` in `Stable tag` že dvignjena, changelog napisan, taga pa še ni (sprememba je bila združena pred izdajo, npr. 1.2.0), verzije ne dvigaj – samo preveri, da changelog pokriva vse spremembe od zadnjega taga (`git log vPREJŠNJA..HEAD -- s59dgo/`).
    - `s59dgo/style.css` → `Version: X.Y.Z`
    - `s59dgo/readme.txt` → `Stable tag: X.Y.Z` in nov blok na vrhu `== Changelog ==` (`= X.Y.Z =`, alineje v slovenščini, napisane za urednika strani, ne za razvijalca).
-2. **Lokalno preverjanje**: če v `prod_backups/` obstaja arhiv, zaženi `bin/lokalno.sh obnovi` (če je arhiv novejši od zadnje obnove) in `bin/preveri-lokalno.sh`; poročilo je v `dist/preverjanje/porocilo.html`. Ob izhodni kodi ≠ 0 (najdbe `napaka` ali preverjanje se ni izvedlo do konca) izdaje ne nadaljuj. Če je arhiv starejši od 30 dni ali ga ni, to povej naročniku in predlagaj nov backup v Backuply. Najdbe `ročni korak` iz poročila dodaj v navodila za namestitev.
+2. **Lokalno preverjanje**: če v `prod_backups/` obstaja arhiv, zaženi `bin/preveri-lokalno.sh` (≈ 1 min). Ta sam opozori, če je v `prod_backups/` novejši arhiv od obnovljenega, in konča z navodilom, če obnove še ni bilo – šele takrat poženi `bin/lokalno.sh obnovi` (≈ 2–3 min; izpiše enkratno geslo za `lokalni`, ki ga ne zapisuj v datoteke ali poročila). Starost arhiva beri iz datuma v imenu (`wp_www.s59dgo.si_LLLL-MM-DD_…tar.gz`); poročilo je v `dist/preverjanje/porocilo.html`. Ob izhodni kodi ≠ 0 (najdbe `napaka` ali preverjanje se ni izvedlo do konca) izdaje ne nadaljuj. Če je arhiv starejši od 30 dni ali ga ni, to povej naročniku in predlagaj nov backup v Backuply. Najdbe `ročni korak` iz poročila dodaj v navodila za namestitev.
 3. **Preverjanje in zip**: `bin/build-zip.sh` požene lint, `bin/test.sh` (PHP testi + Node test generatorja promptov), PHPCS in ustvari `dist/s59dgo.zip`. Izpis preusmeri v datoteko in preberi rep; ob napaki popravi vzrok, ne testa.
 4. **Commit** na veji (sporočilo v slovenščini, npr. `Tema X.Y.Z: …`), nato združitev: `git checkout main && git pull --ff-only && git merge --ff-only <veja>`; po združitvi še enkrat `bin/test.sh`.
 5. **Push in release** (po potrditvi):
@@ -33,12 +33,17 @@ Tema je v produkciji na www.s59dgo.si (prej .org, preusmeritev od 2026-09-13). N
 
 ## Kar sporočiš uporabniku na koncu
 
+- Povzetek lokalnega preverjanja (napake/opozorila/ročni koraki po kontrolah) in ročne korake iz poročila kot seznam opravil za WP administracijo.
+
 - Povezavo na release in pot do `dist/s59dgo.zip`.
 - Namestitev: Videz → Teme → Dodaj novo → Naloži temo → izberi zip → »Zamenjaj trenutno z naloženo«. Nastavitve teme (meni, logotip, Customizer) ostanejo.
 - Ročne korake po namestitvi, ki jih izdaja zahteva – npr. ob novi velikosti slike (`add_image_size`) enkrat pognati vtičnik »Regenerate Thumbnails«, sicer obstoječe slike nimajo novih izrezov.
 - Kratek seznam, kaj preveriti na živi strani (za pregled uporabi skill `s59dgo-pregled-zive-strani`).
 
 ## Pasti
+
+- Lokalna kopija teče na `http://localhost:8059` (8080 zaseda uporabnikov drug projekt `zrs-wordpress`). `bin/build-zip.sh` prvič potegne tudi sliko `bash:5.2` (test `tests/lokalno.test.sh`).
+- Izpis WP-CLI med preverjanjem vsebuje opozorila `Deprecated … Colors.php` (WP-CLI na PHP 8.5) – niso napaka teme.
 
 - Ne dodajaj nesledenih datotek v korenu (`AGENTS.md`, `trenutni_logotipi/`, `bin/dokumenti/`): niso del teme, `trenutni_logotipi/` vsebuje pravo korespondenco društva, repozitorij pa je javen.
 - `prod_backups/` in Dockerjevi volumni `s59dgo-lokalno_*` vsebujejo zasebne podatke produkcije (uporabniki, komentarji, wp-config): nikoli `git add` iz teh poti, poročila in posnetke iz `dist/preverjanje/` ne prilagaj izdaji.
