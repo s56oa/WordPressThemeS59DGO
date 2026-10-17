@@ -10,7 +10,7 @@ Potrjen dizajn: `docs/superpowers/specs/2026-09-09-s59dgo-wordpress-theme-design
 
 Grafika za objave (naslovne slike, infografike, omrežja, ikone): predloge AI promptov v `docs/ai-prompti-grafika.md`, referenčne SVG/PNG v slogu teme v `docs/grafika-referenca/`. Interaktivni vodnik s sestavljalnikom promptov: https://claude.ai/code/artifact/1f8918e8-d624-4fa1-853c-d24127de5d1e
 
-Generator promptov (izpolni predloge iz dokumenta, ena datoteka, deluje brez povezave): `docs/orodja/s59dgo-prompti.html`, objavljen kot artefakt https://claude.ai/artifact/UMSHX2i8n54uMS5ALpKT2B (zmožnost `downloads` za izvoz). Pisave vanj vdela `bin/prompti-pisave.sh`; predloge so v bloku `#podatki` in jih `tests/test-prompti.php` primerja z `docs/ai-prompti-grafika.md` – ob spremembi dokumenta posodobi tudi orodje. Za objavo artefakta odstrani ovoj `<!doctype>…<body>` (artefakt ga doda sam) in objavi kopijo na isti URL.
+Generator promptov (izpolni predloge iz dokumenta, ena datoteka, deluje brez povezave): `docs/orodja/s59dgo-prompti.html`, objavljen kot artefakt https://claude.ai/artifact/UMSHX2i8n54uMS5ALpKT2B (zmožnost `downloads` za izvoz). Pisave vanj vdela `bin/prompti-pisave.sh`; predloge so v bloku `#podatki` in jih `tests/test-prompti.php` primerja z `docs/ai-prompti-grafika.md` – ob spremembi dokumenta posodobi tudi orodje. Za objavo artefakta pripravi kopijo brez ovoja `<!doctype>…<body>` z `bin/prompti-artefakt.sh <pot>` in jo objavi na isti URL.
 
 ## Ukazi
 
@@ -24,11 +24,14 @@ bin/build-zip.sh     # lint + testi + phpcs + dist/s59dgo.zip za nalaganje v WP 
 bin/screenshot.sh    # regenerira s59dgo/screenshot.png iz bin/screenshot.svg (rsvg-convert v Dockerju)
 bin/grafika-referenca.sh  # upodobi docs/grafika-referenca/*.svg v PNG s pisavama teme
 bin/prompti-pisave.sh     # vdela pisave teme kot base64 v docs/orodja/s59dgo-prompti.html
+bin/prompti-artefakt.sh <pot>  # kopija generatorja brez ovoja <!doctype>…<body> za objavo artefakta
 ```
 
 Nov test: `tests/test-<ime>.php`, ki vključi `tests/preveri.php` (in `tests/stubs.php` za funkcije iz `inc/`).
 
 Preizkus poteka na strežniku: zip naloži kot neaktivno temo, preglej prek Videz → Teme → »Predogled v živo«, aktiviraj šele po pregledu. Pred aktivacijo: dodeli meni lokaciji »Glavni meni«, nastavi logotip, napolni gradnike noge (`noga-1..3`), Nastavitve → Branje → 9 objav na stran. Po posodobitvi na 1.2.0 enkrat poženi vtičnik »Regenerate Thumbnails«, da dobijo obstoječe slike izreza 800×520 in 1200×630.
+
+Projektni skilli v `.claude/skills/`: `s59dgo-izdaja-teme` (verzija, zip, merge, tag, GitHub release, namestitev), `s59dgo-generator-promptov` (urejanje in ponovna objava generatorja), `s59dgo-pregled-zive-strani` (crosscheck www.s59dgo.si s Claude in Chrome).
 
 ## Arhitektura
 
