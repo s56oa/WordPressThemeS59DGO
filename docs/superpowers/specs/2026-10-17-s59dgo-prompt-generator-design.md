@@ -44,6 +44,7 @@ objave na www.s59dgo.org in družbenih omrežjih.
 | `docs/orodja/s59dgo-prompti.html` | orodje: HTML + CSS + JS + podatki + vdelane pisave |
 | `bin/prompti-pisave.sh` | vdela woff2 iz `s59dgo/assets/fonts/` kot base64 med označevalci v HTML |
 | `tests/test-prompti.php` | test usklajenosti orodja z dokumentom in osnovne strukture |
+| `tests/prompti.test.mjs` | test jedra (sestavljanje prompta, uvoz) v Node |
 | `CLAUDE.md` | vrstica pri »Grafika za objave« s potjo do orodja in URL artefakta |
 
 ### 3.1 Vdelava pisav
@@ -159,8 +160,8 @@ le »Tema objave«, ki opiše vsebino, a se ne izpiše).
 - **Format**: le dovoljeni za predlogo (npr. napoved 4:5 ali 9:16; plakat A4 ali
   A3; koraki vodoravno 3:2 ali navpično 4:5; statistika 3:2 ali 1:1).
 - **Oranžni poudarek**: kateri element nosi oranžno, kjer je izbira smiselna
-  (sonce, značka, prva vrstica, ikona pokala). Izbira je večkratna; pri več
-  kot enem velikem poudarku (npr. značka in pokal) se izpiše opozorilo o
+  (značka, prva vrstica, ikona pokala, puščice). Izbira je večkratna; pri več
+  kot enem izbranem poudarku (sonce se ne šteje) se izpiše opozorilo o
   pravilu »oranžne največ 10 %«, izbira pa ostane dovoljena.
 
 **4. Izhod.**
@@ -262,9 +263,11 @@ ali `[SLOG]`/`[TIPO]`/`[NE]` (preverja tudi test v brskalniku, §8).
    - vsaka predloga ima `besedilo.en` in `besedilo.sl`, vsaka reža `{{…}}` v
      besedilu ima polje ali element, ki jo izpolni, in obratno;
    - blok pisav vsebuje 8 `@font-face` z `data:font/woff2;base64,`.
-2. **Samopreverjanje v brskalniku**: ob `?test` v URL-ju orodje za vsako
-   predlogo × jezik × orodje sestavi prompt s primerom in v konzolo izpiše,
-   ali kateri vsebuje nezamenjano režo. Ročno pognano pred objavo.
+2. **Test jedra** `tests/prompti.test.mjs` (Node v Dockerju, del
+   `bin/test.sh`): za vsako predlogo × jezik × orodje s privzetimi vrednostmi
+   in s primerom sestavi prompt in preveri, da ne vsebuje nezamenjane reže;
+   poleg tega bloke po orodjih, elemente, prazna polja, posebne znake in uvoz
+   poškodovanih nastavitev.
 3. **Ročni pregled** v Chromu: vseh 15 predlog, oba jezika, vseh 5 orodij,
    svetli in temni način, širina 375 px, delovanje z dvoklikom (`file://`),
    izvoz in uvoz, »Izpolni s primerom«.
