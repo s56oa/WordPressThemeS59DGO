@@ -27,6 +27,7 @@ bin/prompti-pisave.sh     # vdela pisave teme kot base64 v docs/orodja/s59dgo-pr
 bin/prompti-artefakt.sh <pot>  # kopija generatorja brez ovoja <!doctype>…<body> za objavo artefakta
 bin/lokalno.sh gor|dol|obnovi [arhiv]|odpri|pobrisi  # lokalna kopija produkcije v Dockerju: http://localhost:8059
 bin/preveri-lokalno.sh    # kontrole 1–9 teme na lokalni kopiji; poročilo v dist/preverjanje/porocilo.html
+bin/dokumenti.sh     # Wordove predloge društva v dokumenti/ (--test, --viri, --pdf)
 ```
 
 Nov test: `tests/test-<ime>.php`, ki vključi `tests/preveri.php` (in `tests/stubs.php` za funkcije iz `inc/`).
@@ -49,6 +50,12 @@ Projektni skilli v `.claude/skills/`: `s59dgo-izdaja-teme` (lokalno preverjanje,
 - **Naslovne slike**: kartice v mreži so vedno 20:13 (velikost `s59dgo-kartica` 800×520, CSS `object-fit: cover`), posamezna objava pokaže celo sliko (`large`). `inc/druzbena.php` izpiše oznake Open Graph/Twitter v `wp_head` (slika `s59dgo-deljenje` 1200×630, sicer `large` ali logotip) in se umakne, če so aktivni Yoast SEO, Rank Math ali Jetpack (filter `s59dgo_druzbena_podatki`). Generator promptov mora slediti tem razmerjem.
 - **Lokalna kopija produkcije** (`lokalno/`, Docker Compose): WordPress in baza tečeta v notranjem omrežju brez interneta; internet imata le vsebnik `prenos` (jedro WP) in gradnja slike `brskalnik`. `vrata` (socat) je poleg notranjega še v omrežju `objava` (ni `internal`, ker Docker sicer ne objavi porta), objavi samo `127.0.0.1:8059` in posreduje le na `wp:80`. Podatki produkcije so samo v `prod_backups/` (gitignore) in volumnih `s59dgo-lokalno_*` ter vsebujejo zasebne podatke (uporabniki, komentarji, wp-config): nikoli `git add` iz teh poti; `bin/lokalno.sh pobrisi` volumne izbriše. Tema se vgradi samo za branje iz `s59dgo/`.
 - Nastavitvi v Customizerju (`inc/customizer.php`, razdelek Identiteta spletišča): `s59dgo_naslov_doma` in `s59dgo_podnaslov_doma` (prazno = »Novice s Snežnika« / slogan strani). Razvijalske prilagoditvene točke: filtri `s59dgo_naslov_doma`, `s59dgo_podnaslov_doma` in `s59dgo_noga_besedilo`. Tema nima lastnih tipov vsebine ali meta polj.
+- **Dokumentne predloge** (`dokumenti/`) so ločen sklop: `bin/dokumenti.sh` s
+  `python-docx` v Dockerju sestavi `.dotx` predloge in `.docx` primere iz
+  modulov v `bin/dokumenti/`. Podatki društva so samo v
+  `bin/dokumenti/podatki.py`, barve in greben pa so prepisani iz teme, da sta
+  papir in splet skladna. Dizajn: `docs/superpowers/specs/2026-09-13-s59dgo-dokumentne-predloge-design.md`;
+  pasti knjižnice in razlike med Wordom in LibreOfficom: `docs/python-docx-pasti.md`.
 
 ## Konvencije
 

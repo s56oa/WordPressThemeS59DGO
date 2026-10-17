@@ -81,9 +81,9 @@ ne uporablja več.
 - Robovi: levo 25 mm, desno 20 mm, **zgoraj 42 mm**, spodaj 25 mm.
 - Glava 12 mm od vrha, noga 8 mm od dna.
 - Zgornji rob 42 mm je odmerjen po glavi prve strani (vrsta z logotipoma
-  22 mm + greben 7 mm). Nadaljnje strani imajo nižjo glavo, zato ostane nad
-  besedilom nekaj več zraka; to je sprejeto, ker Word robov ne določa po
-  posamezni strani, ampak po razdelku.
+  22 mm + greben pribl. 10 mm). Nadaljnje strani imajo nižjo glavo, zato
+  ostane nad besedilom nekaj več zraka; to je sprejeto, ker Word robov ne
+  določa po posamezni strani, ampak po razdelku.
 
 ### Barve (iste vrednosti kot `--barva-*` v temi)
 
@@ -127,8 +127,9 @@ Tabela treh stolpcev brez obrob:
    razmik znakov 1,2 pt;
 3. logotip ZRS, širina 18 mm, poravnan desno in navpično na sredino.
 
-Pod tabelo greben (`greben.png`, barva `CFE0F0`) v širini besedilnega bloka,
-višina 7 mm, pod njim oranžna črta 1 pt `D9702A`.
+Pod tabelo greben (`greben.png`, barva `CFE0F0`) v širini besedilnega bloka
+(165 mm), višina pri tej širini pribl. 10 mm – sledi iz razmerja grebena v
+temi (1440:90) –, pod njim oranžna črta 1 pt `D9702A`.
 
 Glava nadaljnjih strani (Wordova »drugačna prva stran«): »RADIO KLUB SNEŽNIK ·
 S59DGO« Arial 8 pt `5F7590` levo, »Stran X od Y« desno, pod tem črta 0,5 pt
@@ -147,6 +148,11 @@ slog `S59DGO noga`:
 
 Pod tem ena vrstica čez celotno širino: »Društvo je vpisano v register društev
 pri UE Ilirska Bistrica pod zaporedno številko 21 z dne 30. 09. 1976.«
+
+Odstavki s podatki v nogi imajo velikost in barvo zapisani neposredno na
+runu, ne prek imenovanega sloga »S59DGO noga« – zaradi hrošča LibreOffice-ovega
+izvoza v PDF, ki je pri zadnjem odstavku noge znal izpustiti besedilo, če je
+uporabljal imenovan slog (glej `deli._odstavek_noge`).
 
 ## 5. Predloge
 
@@ -184,7 +190,9 @@ namerna odločitev in ne napaka postavitve.
 ### 5.4 Priznanje (`S59DGO-priznanje.dotx`, `S59DGO-certificate-en.dotx`)
 
 A4 ležeče, robovi 15 mm. Dvojni okvir: zunanji 2 pt `15304F`, notranji 0,75 pt
-`D9702A`, med njima 3 mm. Vsebina po sredini: oba logotipa v vrsti (klubski
+`D9702A`, med njima pribl. 6,5 mm (ne 3 mm: `w:space` zunanjega okvira je
+omejen na 31 pik, znotraj 15 mm robu papirja pa 3 mm ni dosegljivih). Vsebina
+po sredini: oba logotipa v vrsti (klubski
 26 mm, ZRS 20 mm) · »RADIO KLUB SNEŽNIK ILIRSKA BISTRICA« v slogu
 `S59DGO podnaslov` · »PRIZNANJE« Arial 30 pt krepko `15304F`, razmik znakov
 3 pt · ime prejemnika Arial 20 pt s podčrtano linijo · utemeljitev Arial 11 pt
