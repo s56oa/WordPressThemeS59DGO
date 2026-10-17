@@ -90,3 +90,20 @@ preveri( false === strpos( $obnovi, '--path="$html" > /stanje/stanje-produkcije.
 // bin/preveri-lokalno.sh zažene validator (profil preverjanje); dol in pobrisi ga morata ustaviti.
 preveri( false !== strpos( $bin, 'dc --profile preverjanje down' . "\n" ), 'bin/lokalno.sh dol ustavi tudi validator' );
 preveri( false !== strpos( $bin, 'dc --profile preverjanje down -v' ), 'bin/lokalno.sh pobrisi ustavi tudi validator' );
+
+// Izdana verzija za primerjavo in kontrola 1 (Task 5).
+$cesta = $koren . 'lokalno/pripravi-izdano.sh';
+preveri( file_exists( $cesta ), 'lokalno/pripravi-izdano.sh obstaja' );
+$izdana = (string) @file_get_contents( $cesta );
+preveri( false !== strpos( $izdana, 'git describe --tags --abbrev=0' ), 'pripravi-izdano.sh vzame zadnji git tag' );
+preveri( false !== strpos( $izdana, 's59dgo-izdana' ), 'pripravi-izdano.sh namesti temo s59dgo-izdana' );
+preveri( false === strpos( $izdana, 'themes/s59dgo/' ) && 1 !== preg_match( '#themes/s59dgo(["\'\s]|$)#m', $izdana ), 'pripravi-izdano.sh ne piše v wp-content/themes/s59dgo/' );
+preveri( false !== strpos( $izdana, 'theme_mods_s59dgo-izdana' ) && false !== strpos( $izdana, 'option update' ), 'pripravi-izdano.sh kopira theme_mods na s59dgo-izdana' );
+$priprava = strpos( $preveri_sh, 'lokalno/pripravi-izdano.sh' );
+$regen_k  = strpos( $preveri_sh, '--image_size=s59dgo-kartica' );
+$regen_d  = strpos( $preveri_sh, '--image_size=s59dgo-deljenje' );
+preveri( false !== $priprava && $priprava < $izprazni, 'bin/preveri-lokalno.sh pripravi izdano temo pred praznjenjem debug.log' );
+preveri( false !== $regen_k && false !== $regen_d && $regen_k < $izprazni && $regen_d < $izprazni, 'bin/preveri-lokalno.sh regenerira izreza pred praznjenjem debug.log' );
+preveri( false !== $regen_k && $regen_k < $naslovi_k, 'bin/preveri-lokalno.sh regenerira izreza pred naslovi.php (URL-ji izrezov)' );
+preveri( false === strpos( $naslovi, 'gmdate(' ), 'naslovi.php: datumski arhiv po lokalnem času' );
+preveri( false !== strpos( $naslovi, "'slike'" ), 'naslovi.php izpiše URL-je naslovnih slik' );

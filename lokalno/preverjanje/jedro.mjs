@@ -170,7 +170,17 @@ export function povzetek(najdbe) {
   return { napake, opozorila: stej('opozorilo'), rocni: stej('rocni-korak'), izhod: napake > 0 ? 1 : 0 };
 }
 
-const ST_OZNAKA = { 'napaka': 'Napaka', 'opozorilo': 'Opozorilo', 'rocni-korak': 'Ročni korak' };
+// Stopnja »opomba« je samo pojasnilo v poročilu: ne šteje v povzetek in ne blokira.
+const ST_OZNAKA = { 'napaka': 'Napaka', 'opozorilo': 'Opozorilo', 'rocni-korak': 'Ročni korak', 'opomba': 'Opomba' };
+
+// Miniature v podrobnostih najdbe (kontrola 1): relativni poti do slik v mapi poročila.
+function miniature(m) {
+  if (!m || typeof m !== 'object') return '';
+  const slike = [['izrez', 'Izrez kartice'], ['izvirnik', 'Izvirnik']].filter(([k]) => typeof m[k] === 'string' && m[k]);
+  return slike.length
+    ? `<div class="miniature">${slike.map(([k, opis]) => `<img src="${ubezi(m[k])}" alt="${ubezi(opis)}" loading="lazy">`).join('')}</div>`
+    : '';
+}
 
 export function porociloHtml({ cas, arhiv, najdbe, posnetki = [] }) {
   const u = (s) => ubezi(razkodiEntitete(s));
@@ -180,7 +190,8 @@ export function porociloHtml({ cas, arhiv, najdbe, posnetki = [] }) {
     const vrstice = najdbe.filter((n) => n.kontrola === Number(k));
     const telo = vrstice.length
       ? `<table><thead><tr><th>Stopnja</th><th>Sporočilo</th><th>Podrobnosti</th></tr></thead><tbody>${vrstice.map((n) => {
-        const pod = n.podrobnosti && Object.keys(n.podrobnosti).length ? `<code>${u(JSON.stringify(n.podrobnosti))}</code>` : '';
+        const pod = (n.podrobnosti && Object.keys(n.podrobnosti).length ? `<code>${u(JSON.stringify(n.podrobnosti))}</code>` : '')
+          + miniature(n.podrobnosti?.miniature);
         return `<tr class="${ubezi(n.stopnja)}"><td>${u(ST_OZNAKA[n.stopnja] || n.stopnja)}</td><td>${u(n.sporocilo)}</td><td>${pod}</td></tr>`;
       }).join('')}</tbody></table>`
       : '<p class="ok">Brez najdb.</p>';
@@ -196,8 +207,8 @@ export function porociloHtml({ cas, arhiv, najdbe, posnetki = [] }) {
 <style>
 body{font:15px/1.5 system-ui,sans-serif;margin:0 auto;max-width:72rem;padding:1rem;color:#1a1a1a;background:#fff}
 table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:.3rem .5rem;text-align:left;vertical-align:top}
-tr.napaka td:first-child{color:#b00020;font-weight:700}tr.opozorilo td:first-child{color:#8a5a00;font-weight:700}tr.rocni-korak td:first-child{color:#0b5394;font-weight:700}
-.trojica{display:flex;gap:.5rem}.trojica img{max-width:32%;height:auto}code{font-size:12px;word-break:break-all}
+tr.napaka td:first-child{color:#b00020;font-weight:700}tr.opozorilo td:first-child{color:#8a5a00;font-weight:700}tr.rocni-korak td:first-child{color:#0b5394;font-weight:700}tr.opomba td:first-child{color:#555}
+.trojica{display:flex;gap:.5rem}.miniature{display:flex;gap:.5rem;margin-top:.3rem}.miniature img{max-width:12rem;height:auto;border:1px solid #ccc}.trojica img{max-width:32%;height:auto}code{font-size:12px;word-break:break-all}
 @media (prefers-color-scheme:dark){body{background:#111;color:#eee}td,th{border-color:#444}}
 </style></head><body>
 <h1>Preverjanje lokalnega WordPressa</h1>

@@ -2,8 +2,9 @@
 // Prebere /stanje/naslovi.json in /stanje/stanje-produkcije.json, požene kontrole,
 // zapiše /porocilo/porocilo.html in /porocilo/najdbe.json ter natisne povzetek.
 import { readFile, writeFile } from 'node:fs/promises';
-import { odkrijNaslove, povzetek, porociloHtml, NASLOVI_KONTROL } from './jedro.mjs';
+import { najdba, odkrijNaslove, povzetek, porociloHtml, NASLOVI_KONTROL } from './jedro.mjs';
 import { kontrola2, kontrola2Dnevnik, kontrola4, kontrola5, kontrola6 } from './kontrole-streznik.mjs';
+import { kontrola1, kontrola3 } from './kontrole-vsebina.mjs';
 
 const OSNOVA = 'http://localhost:8059';
 const beri = async (pot) => JSON.parse(await readFile(pot, 'utf8'));
@@ -11,16 +12,17 @@ const beri = async (pot) => JSON.parse(await readFile(pot, 'utf8'));
 const podatki = await beri('/stanje/naslovi.json');
 const stanje = await beri('/stanje/stanje-produkcije.json');
 const { naslovi, najdbe } = odkrijNaslove(podatki);
-const kontekst = { naslovi, podatki, stanje, osnova: OSNOVA };
+const kontekst = { naslovi, podatki, stanje, osnova: OSNOVA, mapaPorocila: '/porocilo' };
 
-for (const [ime, kontrola] of [['2', kontrola2], ['4', kontrola4], ['5', kontrola5], ['6', kontrola6]]) {
+const kontrole = [[1, kontrola1], [2, kontrola2], [3, kontrola3], [4, kontrola4], [5, kontrola5], [6, kontrola6]];
+for (const [st, kontrola] of kontrole) {
   try {
     najdbe.push(...await kontrola(kontekst));
   } catch (e) {
-    najdbe.push({ kontrola: Number(ime), stopnja: 'napaka', sporocilo: `Kontrola ${ime} se ni izvedla: ${e.message}`, podrobnosti: {} });
+    najdbe.push(najdba(st, 'napaka', `Kontrola ${st} se ni izvedla: ${e.message}`));
   }
 }
-// debug.log šele po vseh zahtevah.
+// debug.log šele po vseh zahtevah (tudi tistih iz kontrol 1 in 3).
 let dnevnik = '';
 try { dnevnik = await readFile('/stanje/debug.log', 'utf8'); } catch { /* ni dnevnika = ni vrstic */ }
 najdbe.push(...await kontrola2Dnevnik({ ...kontekst, dnevnik }));
@@ -31,9 +33,10 @@ await writeFile('/porocilo/porocilo.html', porociloHtml({ cas, arhiv: stanje.arh
 
 const p = povzetek(najdbe);
 console.log(`\nPreverjanje lokalne kopije (arhiv: ${stanje.arhiv})`);
-for (const [k, naslov] of Object.entries(NASLOVI_KONTROL)) {
-  const v = najdbe.filter((n) => n.kontrola === Number(k));
-  if (!v.length) continue;
+// Vsaka izvedena kontrola, tudi brez najdb.
+for (const [k] of kontrole) {
+  const naslov = NASLOVI_KONTROL[k];
+  const v = najdbe.filter((n) => n.kontrola === k);
   const st = (s) => v.filter((n) => n.stopnja === s).length;
   console.log(`  ${k}. ${naslov}: napake ${st('napaka')}, opozorila ${st('opozorilo')}, ročni koraki ${st('rocni-korak')}`);
 }

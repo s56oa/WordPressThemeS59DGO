@@ -76,8 +76,30 @@ if ( $s59dgo_najnovejsa ) {
 
 $s59dgo_datum = null;
 if ( $s59dgo_najnovejsa ) {
-	$s59dgo_cas   = get_post_time( 'U', true, $s59dgo_najnovejsa[0] );
-	$s59dgo_datum = get_month_link( (int) gmdate( 'Y', $s59dgo_cas ), (int) gmdate( 'n', $s59dgo_cas ) );
+	// Datumski arhiv po lokalnem času spletišča (kot permalink objave), ne po GMT.
+	$s59dgo_datum = get_month_link( (int) get_post_time( 'Y', false, $s59dgo_najnovejsa[0] ), (int) get_post_time( 'n', false, $s59dgo_najnovejsa[0] ) );
+}
+
+// URL-ji naslovnih slik objavljenih objav (kontrola 1: miniature opazno obrezanih), po ID-ju priponke.
+$s59dgo_slike = array();
+foreach ( get_posts(
+	array(
+		'post_type'      => 'post',
+		'post_status'    => 'publish',
+		'has_password'   => false,
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		'meta_key'       => '_thumbnail_id', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+	)
+) as $s59dgo_objava_id ) {
+	$s59dgo_priponka = (int) get_post_thumbnail_id( $s59dgo_objava_id );
+	if ( $s59dgo_priponka ) {
+		$s59dgo_slike[ (string) $s59dgo_priponka ] = array(
+			'izvirnik'  => wp_get_attachment_image_url( $s59dgo_priponka, 'full' ),
+			'predogled' => wp_get_attachment_image_url( $s59dgo_priponka, 'medium' ),
+			'kartica'   => wp_get_attachment_image_url( $s59dgo_priponka, 's59dgo-kartica' ),
+		);
+	}
 }
 
 $s59dgo_naslovi = array(
@@ -91,6 +113,7 @@ $s59dgo_naslovi = array(
 	'oznaka'               => $s59dgo_izraz( 'post_tag' ),
 	'datum'                => $s59dgo_datum,
 	'iskalni_niz'          => $s59dgo_niz,
+	'slike'                => (object) $s59dgo_slike,
 );
 
 echo wp_json_encode( $s59dgo_naslovi, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . "\n";

@@ -121,13 +121,15 @@ const XMLRPC = '<?xml version="1.0"?><methodCall><methodName>system.listMethods<
 
 // xmlrpc.php ne sprejema klicev: zavrnjen (≥ 400 ali <fault>) ali pa ponuja samo vgrajene
 // metode system.* (mu-plugin izprazni xmlrpc_methods; .htaccess s produkcije lokalno ne velja).
-// Vrne null, če je v redu, sicer opis kršitve.
+// Vrne null, če je v redu, { opomba } če je v redu le na ravni mu-plugina, sicer opis kršitve.
+const OPOMBA_XMLRPC = 'xmlrpc.php odgovori, ponudi pa samo vgrajene metode system.* (mu-plugin). '
+  + 'Plast .htaccess s produkcije (403 za xmlrpc.php) lokalno ni preverjena.';
 function presodiXmlrpc({ koda, telo }) {
   if (koda >= 400 || /<fault>/i.test(telo)) return null;
   if (!/<methodResponse/i.test(telo)) return 'odziv ni XML-RPC';
   const metode = [...telo.matchAll(/<string>\s*([^<]+?)\s*<\/string>/g)].map((z) => z[1]);
   const tuje = metode.filter((m) => !m.startsWith('system.'));
-  return tuje.length ? `ponuja metode ${tuje.slice(0, 5).join(', ')}${tuje.length > 5 ? ' …' : ''}` : null;
+  return tuje.length ? `ponuja metode ${tuje.slice(0, 5).join(', ')}${tuje.length > 5 ? ' …' : ''}` : { opomba: OPOMBA_XMLRPC };
 }
 
 // 6: utrjevanje (mu-plugin 00-s59dgo-hardening.php s produkcije) in PHP v uploads/.
@@ -144,12 +146,14 @@ export async function kontrola6(kontekst) {
     ['?author__not_in=1 vrne 403', `${o}/?author__not_in=1`, {}, ({ koda }) => (koda === 403 ? null : '')],
     ['domača stran nima <meta name="generator">', `${o}/`, {}, ({ telo }) => (/<meta[^>]+name\s*=\s*["']?generator/i.test(telo) ? '' : null)],
   ];
-  // presodi(odziv) → null (v redu) ali opis kršitve (lahko prazen).
+  // presodi(odziv) → null (v redu), { opomba } (v redu, s pojasnilom) ali opis kršitve (lahko prazen).
   for (const [opis, url, moznosti, presodi] of preizkusi) {
     try {
       const odziv = await zahteva(kontekst, url, moznosti);
       const krsitev = presodi(odziv);
-      if (krsitev !== null) {
+      if (krsitev?.opomba) {
+        najdbe.push(najdba(6, 'opomba', `Izpolnjeno: ${opis} (koda ${odziv.koda}; samo raven mu-plugina)`, { url, koda: odziv.koda, opomba: krsitev.opomba }));
+      } else if (krsitev !== null) {
         najdbe.push(najdba(6, 'napaka', `Ni izpolnjeno: ${opis} (koda ${odziv.koda}${krsitev ? `; ${krsitev}` : ''})`, { url, koda: odziv.koda }));
       }
     } catch (e) {

@@ -7,6 +7,10 @@ import {
 import {
   razcleniMeta, razvrstiDnevnik, kontrola2, kontrola4, kontrola5, kontrola6,
 } from '../lokalno/preverjanje/kontrole-streznik.mjs';
+import { pridobiHtml, slikeKartic, kontrola1, kontrola3 } from '../lokalno/preverjanje/kontrole-vsebina.mjs';
+import { mkdtemp, readdir, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 let stevilo = 0;
 function ok(pogoj, sporocilo) { assert.ok(pogoj, sporocilo); stevilo++; }
@@ -98,6 +102,7 @@ ok(razvrstiKonzolo({ besedilo: 'x', url: `${O}/wp-includes/js/a.js` }) === 'drug
 const nn = noveNajdbe(['Napaka: x vrstica 12', 'B'], ['Napaka: x vrstica 40']);
 ok(nn.length === 1 && nn[0] === 'B', 'noveNajdbe');
 ok(noveNajdbe(['Error at line 3, column 9: z'], ['Error at line 8, column 1: z']).length === 0, 'noveNajdbe: line/column');
+ok(noveNajdbe(['domov: Napaka … stolpec 5'], ['domov: Napaka … stolpec 9']).length === 0, 'noveNajdbe: stolpec');
 
 // povzetek
 ok(povzetek([najdba(1, 'opozorilo', 'a')]).izhod === 0, 'povzetek: opozorilo ne blokira');
@@ -225,11 +230,97 @@ ok(r.length === 6 && r.every((x) => x.stopnja === 'napaka' && x.kontrola === 6),
 // Brez .htaccess s produkcije ostanejo samo vgrajene metode system.* (mu-plugin izprazni xmlrpc_methods).
 const samoSystem = '<methodResponse><params><param><value><array><data><value><string>system.multicall</string></value><value><string>system.listMethods</string></value><value><string>system.getCapabilities</string></value></data></array></value></param></params></methodResponse>';
 r = await kontrola6({ osnova: O, stanje: { php_v_uploads: [] }, fetch: navidezen({ ...varno, 'POST /xmlrpc.php': odziv(200, samoSystem) }) });
-ok(r.length === 0, 'kontrola6: xmlrpc s samimi metodami system.* ne sprejema klicev');
+ok(stopnje(r, 'napaka').length === 0, 'kontrola6: xmlrpc s samimi metodami system.* ne sprejema klicev');
 r = await kontrola6({ osnova: O, stanje: { php_v_uploads: [] }, fetch: navidezen({ ...varno, 'POST /xmlrpc.php': odziv(200, samoSystem.replace('system.multicall', 'pingback.ping')) }) });
 ok(r.length === 1 && r[0].sporocilo.includes('pingback.ping'), 'kontrola6: xmlrpc z metodo pingback.ping = napaka z imenom metode');
 let xmlrpcTelo = '';
 await kontrola6({ osnova: O, stanje: { php_v_uploads: [] }, fetch: navidezen({ ...varno, 'POST /xmlrpc.php': (o) => { xmlrpcTelo = o.body; return odziv(403); } }) });
 ok(xmlrpcTelo.includes('<methodName>system.listMethods</methodName>'), 'kontrola6: klic system.listMethods');
+// Opomba ob xmlrpc s samimi metodami system.*: ni napake, opozorila ali ročnega koraka.
+r = await kontrola6({ osnova: O, stanje: { php_v_uploads: [] }, fetch: navidezen({ ...varno, 'POST /xmlrpc.php': odziv(200, samoSystem) }) });
+ok(povzetek(r).napake + povzetek(r).opozorila + povzetek(r).rocni === 0, 'kontrola6: system.* brez najdb, ki štejejo');
+ok(r.length === 1 && r[0].stopnja === 'opomba' && r[0].podrobnosti.opomba.includes('.htaccess'), 'kontrola6: system.* doda opombo o .htaccess');
+h = porociloHtml({ ...osnova, najdbe: r });
+ok(h.includes('Opomba') && h.includes('.htaccess'), 'porocilo: opomba izpisana');
+
+// kontrole-vsebina.mjs
+let piskotek = 'ni klica';
+const zapomni = async (u, o = {}) => { piskotek = o.headers?.Cookie ?? null; return odziv(200, '<p>x</p>'); };
+ok(await pridobiHtml(`${O}/`, { izdana: true, fetch: zapomni }) === '<p>x</p>' && piskotek === 's59dgo_primerjava=izdana', 'pridobiHtml: piškotek za izdano');
+await pridobiHtml(`${O}/`, { izdana: false, fetch: zapomni });
+ok(piskotek === null, 'pridobiHtml: brez piškotka za trenutno');
+
+const mreza = (src7, src8) => `<main><div class="mreza">
+<article id="objava-7" class="post-7 post kartica"><a class="kartica__slika" href="${O}/a/" tabindex="-1" aria-hidden="true"><img width="800" height="520" src="${src7}" class="attachment-s59dgo-kartica" alt="" loading="lazy" srcset="x 800w"></a><h2>A</h2></article>
+<article id="objava-8" class="post-8 post kartica"><a class="kartica__slika" href="${O}/b/"><img src="${src8}" alt=""></a></article>
+<article id="objava-9" class="post-9 post kartica"><a class="kartica__slika" href="${O}/c/"><img class="kartica__nadomestna" src="${O}/wp-content/themes/s59dgo/assets/img/greben.svg" alt=""></a></article>
+</div></main>`;
+const k = slikeKartic(mreza(`${O}/u/a-800x520.jpg`, `${O}/u/b.jpg`));
+ok(k.length === 3 && k[0].objava_id === 7 && k[0].src === `${O}/u/a-800x520.jpg` && k[1].objava_id === 8 && k[1].src === `${O}/u/b.jpg`, 'slikeKartic: objava in src');
+
+const naslovi1 = [{ vrsta: 'domov', url: `${O}/`, pricakovano: 200 }, { vrsta: 'stran', url: `${O}/o/`, pricakovano: 200 }];
+const stanje1 = { slike: [
+  { objava_id: 7, naslov: 'A', priponka_id: 70, sirina: 1600, visina: 1040, ima_kartica: true, ima_deljenje: true },
+  { objava_id: 8, naslov: 'B', priponka_id: 80, sirina: 1000, visina: 1000, ima_kartica: false, ima_deljenje: false },
+] };
+const podatki1 = { slike: { 80: { izvirnik: `${O}/u/b.jpg`, predogled: `${O}/u/b-300x300.jpg`, kartica: `${O}/u/b-800x520.jpg` } } };
+const slikaOdziv = () => ({ status: 200, ok: true, text: async () => '', arrayBuffer: async () => new Uint8Array([1, 2, 3]).buffer });
+const fetch1 = (domov) => async (url) => (url === `${O}/` ? odziv(200, domov) : slikaOdziv());
+const mapa = await mkdtemp(join(tmpdir(), 's59dgo-k1-'));
+r = await kontrola1({ naslovi: naslovi1, podatki: podatki1, stanje: stanje1, mapaPorocila: mapa, fetch: fetch1(mreza(`${O}/u/a-800x520.jpg`, `${O}/u/b.jpg`)) });
+ok(r.every((x) => x.kontrola === 1), 'kontrola1: vse najdbe kontrole 1');
+ok(stopnje(r, 'rocni-korak').length === 1 && stopnje(r, 'rocni-korak')[0].podrobnosti.objava_id === 8, 'kontrola1: ročni korak iz posnetka (objava 8)');
+const nap1 = stopnje(r, 'napaka');
+ok(nap1.length === 1 && nap1[0].podrobnosti.objava_id === 8 && nap1[0].sporocilo.includes('800×520'), 'kontrola1: kartica brez izreza po regeneraciji = napaka');
+const obrez = r.find((x) => /opazno obrezana/.test(x.sporocilo));
+ok(obrez && obrez.podrobnosti.miniature?.izrez_url === `${O}/u/b-800x520.jpg` && obrez.podrobnosti.miniature?.izvirnik_url === `${O}/u/b.jpg`, 'kontrola1: opazno obrezana z URL-jema izreza in izvirnika');
+ok(obrez.podrobnosti.miniature.izrez.startsWith('slike/') && (await readdir(join(mapa, 'slike'))).length === 2, 'kontrola1: miniaturi shranjeni v slike/');
+h = porociloHtml({ ...osnova, najdbe: r });
+ok(h.includes(`src="${obrez.podrobnosti.miniature.izrez}"`) && h.includes(`src="${obrez.podrobnosti.miniature.izvirnik}"`), 'porocilo: miniaturi obrezane slike');
+r = await kontrola1({ naslovi: naslovi1, podatki: podatki1, stanje: stanje1, mapaPorocila: mapa, fetch: fetch1(mreza(`${O}/u/a-800x520.jpg`, `${O}/u/b-800x520.jpg`)) });
+ok(stopnje(r, 'napaka').length === 0, 'kontrola1: vse kartice z izrezom = brez napake');
+// Premajhen izvirnik ali točno 800×520: kartica sme imeti izvirnik.
+r = await kontrola1({ naslovi: naslovi1, podatki: {}, stanje: { slike: [
+  { objava_id: 7, naslov: 'A', priponka_id: 70, sirina: 640, visina: 400, ima_kartica: false, ima_deljenje: false },
+  { objava_id: 8, naslov: 'B', priponka_id: 80, sirina: 800, visina: 520, ima_kartica: false, ima_deljenje: false },
+] }, fetch: fetch1(mreza(`${O}/u/a.jpg`, `${O}/u/b.jpg`)) });
+ok(stopnje(r, 'napaka').length === 0, 'kontrola1: premajhen ali točen izvirnik ni napaka');
+await rm(mapa, { recursive: true, force: true });
+
+// kontrola3: validator prek navideznega fetch
+const vrste3 = [{ vrsta: 'domov', url: `${O}/`, pricakovano: 200 }, { vrsta: 'stran', url: `${O}/o/`, pricakovano: 200 }];
+const strani3 = {
+  trenutna: { [`${O}/`]: '<html>T-domov /themes/s59dgo/</html>', [`${O}/o/`]: '<html>T-stran /themes/s59dgo/</html>' },
+  izdana: { [`${O}/`]: '<html>I-domov /themes/s59dgo-izdana/</html>', [`${O}/o/`]: '<html>I-stran /themes/s59dgo-izdana/</html>' },
+};
+const napakeNu = {
+  'T-domov': ['Stray end tag “div”.', 'Bad value “x” for attribute “rel” on element “a”.', 'Bad value “x” for attribute “rel” on element “a”.'],
+  'T-stran': ['Bad value “x” for attribute “rel” on element “a”.'],
+  'I-domov': ['Bad value “x” for attribute “rel” on element “a”.', 'Unclosed element “div”.'],
+  'I-stran': ['Bad value “x” for attribute “rel” on element “a”.'],
+};
+let validacije = [];
+const fetch3 = (strani) => async (url, o = {}) => {
+  if (url.startsWith('http://validator:8888/')) {
+    validacije.push({ url, tip: o.headers['Content-Type'] });
+    const kljuc = String(o.body).match(/[TI]-\w+/)[0];
+    return { status: 200, ok: true, json: async () => ({ messages: [...napakeNu[kljuc].map((m) => ({ type: 'error', message: m, lastLine: 3 })), { type: 'info', subType: 'warning', message: 'Opozorilo' }] }) };
+  }
+  return odziv(200, strani[o.headers?.Cookie ? 'izdana' : 'trenutna'][url]);
+};
+r = await kontrola3({ naslovi: vrste3, cakajValidator: 0, fetch: fetch3(strani3) });
+ok(validacije.length === 4 && validacije.every((v) => v.url === 'http://validator:8888/?out=json' && v.tip === 'text/html; charset=utf-8'), 'kontrola3: POST na validator z text/html');
+ok(r.every((x) => x.kontrola === 3), 'kontrola3: najdbe kontrole 3');
+const nap3 = stopnje(r, 'napaka');
+ok(nap3.length === 1 && nap3[0].sporocilo.includes('domov') && nap3[0].sporocilo.includes('Stray end tag'), 'kontrola3: nova napaka = napaka');
+const opo3 = stopnje(r, 'opozorilo');
+ok(opo3.length === 1 && opo3[0].sporocilo.includes('rel') && opo3[0].podrobnosti.pojavitev === 3, 'kontrola3: enake kot v izdani = eno opozorilo s številom pojavitev');
+ok(!r.some((x) => x.sporocilo.includes('Opozorilo')), 'kontrola3: samo sporočila tipa error');
+// Izdana tema se ne izriše (piškotek brez učinka) → napaka, ne lažno »brez novih napak«.
+r = await kontrola3({ naslovi: vrste3.slice(0, 1), cakajValidator: 0, fetch: fetch3({ trenutna: strani3.trenutna, izdana: strani3.trenutna }) });
+ok(stopnje(r, 'napaka').some((x) => x.sporocilo.includes('s59dgo-izdana')), 'kontrola3: izdana tema ni izrisana = napaka');
+// Validator ni dosegljiv → napaka z razlogom.
+r = await kontrola3({ naslovi: vrste3.slice(0, 1), cakajValidator: 0, fetch: async (url, o) => { if (url.startsWith('http://validator')) throw new Error('ECONNREFUSED'); return fetch3(strani3)(url, o); } });
+ok(stopnje(r, 'napaka').length === 1 && stopnje(r, 'napaka')[0].sporocilo.includes('ECONNREFUSED'), 'kontrola3: validator nedosegljiv = napaka');
 
 console.log(`lokalno.test.mjs: ${stevilo} preverjanj OK`);
