@@ -3137,14 +3137,26 @@ legend{padding:0;margin-bottom:6px}
   const J = window.S59DGO_JEDRO;
   const P = JSON.parse(document.getElementById('podatki').textContent);
   const $ = id => document.getElementById(id);
+  const KLJUC = 's59dgo-prompti-v1';
   let stanje = nalozi();
   let stevecId = 0;
   const nid = () => 'v' + (++stevecId);
   let poudarkiIzbirniki = [];
 
-  // SHRANJEVANJE-ZAČETEK (Task 7)
-  function nalozi() { return J.zacetno(P); }
-  function shrani() {}
+  // SHRANJEVANJE-ZAČETEK
+  function nalozi() {
+    try {
+      const t = localStorage.getItem(KLJUC);
+      if (t) {
+        const r = J.preveriUvoz(P, JSON.parse(t));
+        if (r.ok) return r.stanje;
+      }
+    } catch (napaka) { /* brez shranjevanja (zasebno okno, peskovnik) */ }
+    return J.zacetno(P);
+  }
+  function shrani() {
+    try { localStorage.setItem(KLJUC, JSON.stringify(stanje)); } catch (napaka) { /* brez shranjevanja */ }
+  }
   // SHRANJEVANJE-KONEC
 
   const tp = () => J.predloga(P, stanje.predloga);
@@ -3385,7 +3397,31 @@ legend{padding:0;margin-bottom:6px}
     document.querySelectorAll('input[name=jezik]').forEach(r => r.addEventListener('change', () => { stanje.jezik = r.value; posodobi(); }));
     $('gumb-primer').addEventListener('click', () => { const p = tp(); stanje.vrednosti[p.id] = J.primer(P, p, stanje.jezik); izrisiVse(); });
     $('gumb-ponastavi').addEventListener('click', () => { const p = tp(); stanje.vrednosti[p.id] = J.privzeto(P, p); izrisiVse(); });
-    // DATOTEKE (Task 7)
+    const sporoci = t => { $('stanje-datoteke').textContent = t; };
+    $('gumb-izvozi').addEventListener('click', () => {
+      const datum = new Date().toISOString().slice(0, 10);
+      const url = URL.createObjectURL(new Blob([JSON.stringify(stanje, null, 2)], { type: 'application/json' }));
+      const a = el('a', { href: url, download: 's59dgo-prompt-' + stanje.predloga + '-' + datum + '.json' });
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      sporoci('Izvoženo.');
+    });
+    $('datoteka-uvoz').addEventListener('change', e => {
+      const dat = e.target.files && e.target.files[0];
+      e.target.value = '';
+      if (!dat) return;
+      dat.text().then(t => {
+        let obj;
+        try { obj = JSON.parse(t); } catch (napaka) { sporoci('Uvoz ni uspel: datoteka ni veljaven JSON.'); return; }
+        const r = J.preveriUvoz(P, obj);
+        if (!r.ok) { sporoci('Uvoz ni uspel: ' + r.napaka); return; }
+        stanje = r.stanje;
+        izrisiVse();
+        sporoci('Uvoženo: ' + dat.name);
+      }, () => sporoci('Uvoz ni uspel: datoteke ni mogoče prebrati.'));
+    });
     izrisiVse();
   }
 
