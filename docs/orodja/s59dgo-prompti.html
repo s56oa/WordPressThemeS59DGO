@@ -2937,7 +2937,198 @@ legend{padding:0;margin-bottom:6px}
 <script id="predogled-js">
 (function () {
   'use strict';
-  window.S59DGO_PREDOGLED = { izrisi: function () {} };
+  const NS = 'http://www.w3.org/2000/svg';
+  const OZADJA = { temno: '#15304f', svetlo: '#eef3f8', bela: '#ffffff', prosojno: '#ffffff' };
+  const GREBENI = { '2-temno': ['#1f4470', '#2a5687'], '3-temno': ['#b9d0e6', '#1f4470', '#2a5687'], '2-svetlo': ['#b9d0e6', '#2a5687'], '3-svetlo': ['#b9d0e6', '#2a5687', '#15304f'] };
+  const OBLIKE = [
+    [0, .5, 12, .2, 24, .42, 38, 0, 50, .3, 62, .1, 76, .36, 88, .16, 100, .42],
+    [0, .58, 14, .32, 28, .52, 44, .18, 58, .48, 72, .28, 86, .52, 100, .38],
+    [0, .74, 18, .5, 34, .68, 52, .44, 70, .7, 86, .5, 100, .64]
+  ];
+  const ORANZNA = '#d9702a';
+
+  function s(tag, a, besedilo) {
+    const e = document.createElementNS(NS, tag);
+    Object.keys(a || {}).forEach(k => e.setAttribute(k, a[k]));
+    if (besedilo != null) e.textContent = besedilo;
+    return e;
+  }
+  function prelomi(t, n) {
+    const out = [];
+    let vr = '';
+    t.split(/\s+/).forEach(b => {
+      if (vr && (vr + ' ' + b).length > n) { out.push(vr); vr = b; } else vr = (vr + ' ' + b).trim();
+    });
+    if (vr) out.push(vr);
+    return out;
+  }
+
+  function izrisi(svg, P, p, v) {
+    const J = window.S59DGO_JEDRO, e = v.elementi || {};
+    const f = J.poId(p.formati, e.format) || p.formati[0];
+    const W = 1000, H = Math.round(W * f.h / f.w);
+    const oz = p.ozadja ? (J.poId(p.ozadja, e.ozadje) || p.ozadja[0]).id : '';
+    const sh = p.shema || {};
+    const c = {
+      P, p, v, e, W, H, oz, J,
+      X: x => x * W / 100,
+      Y: y => y * H / 100,
+      barva: x => (x.barve ? x.barve[oz] : x.barva === 'auto' ? (oz === 'svetlo' ? '#15304f' : '#b9d0e6') : x.barva),
+      poudarek: id => !id || (e.poudarki || []).includes(id)
+    };
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    svg.replaceChildren();
+    svg.appendChild(s('rect', { width: W, height: H, fill: (sh.ozadja && sh.ozadja[oz]) || sh.ozadje || OZADJA[oz] || OZADJA.temno }));
+    if (oz === 'prosojno') sahovnica(svg, c);
+    (sh.elementi || []).forEach(x => { if (ELEMENTI[x.t]) ELEMENTI[x.t](svg, x, c); });
+    (f.varno || []).forEach(r => svg.appendChild(s('rect', { x: c.X(r.x) + 3, y: c.Y(r.y) + 3, width: c.X(r.w) - 6, height: c.Y(r.h) - 6, fill: 'none', stroke: ORANZNA, 'stroke-width': 4, 'stroke-dasharray': '14 10' })));
+  }
+
+  function sahovnica(svg, c) {
+    const g = s('g', { fill: '#e6ecf2' }), k = 40;
+    for (let y = 0; y < c.H; y += k) for (let x = (y / k) % 2 ? k : 0; x < c.W; x += 2 * k) g.appendChild(s('rect', { x, y, width: k, height: k }));
+    svg.appendChild(g);
+  }
+
+  function besedilo(svg, t, x, c) {
+    const v = x.v * c.W / 100, sirina = c.X(x.sirina || 80);
+    if (!t) {
+      svg.appendChild(s('rect', { x: c.X(x.x), y: c.Y(x.y) - v * .8, width: sirina * .5, height: v * .8, rx: 4, fill: x.barva, opacity: .28 }));
+      return;
+    }
+    if (x.verzalke) t = t.toUpperCase();
+    const vrstice = prelomi(t, Math.max(4, Math.floor(sirina / (v * (x.verzalke ? .68 : .56))))).slice(0, x.vrstic || 1);
+    const tx = s('text', { x: c.X(x.x), y: c.Y(x.y), fill: x.barva, 'font-size': v, 'font-family': x.pisava === 'n' ? 'Space Grotesk, Trebuchet MS, Arial, sans-serif' : 'IBM Plex Sans, Arial, sans-serif', 'font-weight': x.krepko ? 700 : 400, 'letter-spacing': x.verzalke ? v * .08 : 0 });
+    vrstice.forEach((r, i) => tx.appendChild(s('tspan', { x: c.X(x.x), dy: i ? v * 1.12 : 0 }, r)));
+    svg.appendChild(tx);
+  }
+  const polne = (c, id) => {
+    const f = c.J.poId(c.p.polja, id);
+    return (c.v.polja[id] || []).filter(r => f.stolpci.some(st => String(r[st.id] || '').trim()));
+  };
+  const izbranaVrstica = (c, id) => (id ? Math.min(Number(c.v.polja[id]) || 0, 99) : -1);
+
+  function greben(svg, od, d, barve, c) {
+    barve.forEach((b, i) => {
+      const o = OBLIKE[OBLIKE.length - barve.length + i];
+      let pot = 'M0 ' + c.Y(d);
+      for (let k = 0; k < o.length; k += 2) pot += ' L' + c.X(o[k]) + ' ' + (c.Y(od) + o[k + 1] * (c.Y(d) - c.Y(od)));
+      svg.appendChild(s('path', { d: pot + ' L' + c.W + ' ' + c.Y(d) + ' Z', fill: b }));
+    });
+  }
+
+  function antena(svg, x, b, c) {
+    const cx = c.X(x.x + x.w / 2), vrh = c.Y(x.y), dno = c.Y(x.y + x.h), w = c.X(x.w), h = dno - vrh;
+    svg.appendChild(s('rect', { x: cx - w * .05, y: vrh + h * .22, width: w * .1, height: h * .78, fill: b }));
+    [0, 1].forEach(i => {
+      const y = vrh + h * (.28 + i * .16);
+      svg.appendChild(s('rect', { x: cx - w * .42, y, width: w * .84, height: w * .05, fill: b }));
+      for (let k = 0; k < 5; k++) svg.appendChild(s('rect', { x: cx - w * .38 + k * w * .18, y: y - w * .12, width: w * .04, height: w * .28, fill: b }));
+    });
+    [.45, .75].forEach((r, i) => svg.appendChild(s('path', { d: 'M' + (cx - w * r) + ' ' + (vrh + h * .12) + ' A' + w * r + ' ' + w * r + ' 0 0 1 ' + (cx + w * r) + ' ' + (vrh + h * .12), fill: 'none', stroke: b, 'stroke-width': w * .04, 'stroke-linecap': 'round', opacity: .85 - i * .35 })));
+  }
+
+  const ELEMENTI = {
+    pas(svg, x, c) { svg.appendChild(s('rect', { x: c.X(x.x), y: c.Y(x.y), width: c.X(x.w), height: c.Y(x.h), rx: x.r ? c.X(x.r) : 0, fill: c.barva(x) })); },
+    krog(svg, x, c) { svg.appendChild(s('circle', { cx: c.X(x.x), cy: c.Y(x.y), r: c.X(x.r), fill: x.barva })); },
+    sonce(svg, x, c) {
+      if (!c.p.sonce || c.e.sonce === 'brez') return;
+      svg.appendChild(s('circle', { cx: c.X(c.e.sonce === 'levo' ? 12 : 88), cy: c.Y(x.y), r: Math.min(c.W, c.H) * .055, fill: ORANZNA }));
+    },
+    greben(svg, x, c) {
+      const kljuc = (c.e.plasti === 3 ? 3 : 2) + '-' + (c.oz === 'svetlo' ? 'svetlo' : 'temno');
+      greben(svg, x.od, x.do, x.barve || (x.barvePo && x.barvePo[c.oz]) || GREBENI[kljuc], c);
+    },
+    besedilo(svg, x, c) {
+      const t = x.polja ? x.polja.map(id => String(c.v.polja[id] || '').trim()).filter(Boolean).join(' · ') : String(c.v.polja[x.polje] || '').trim();
+      besedilo(svg, t, x, c);
+    },
+    staticno(svg, x, c) { besedilo(svg, x.besedilo, Object.assign({ sirina: 90 }, x), c); },
+    znacka(svg, x, c) {
+      const vkl = c.poudarek(x.poudarek), v = x.v * c.W / 100;
+      const t = String(c.v.polja[x.polje] || '').trim().toUpperCase() || '·····';
+      const w = t.length * v * .7 + v * 1.6;
+      svg.appendChild(s('rect', { x: c.X(x.x), y: c.Y(x.y) - v * 1.25, width: w, height: v * 1.8, rx: v * .35, fill: vkl ? ORANZNA : (x.barvaNe || '#b9d0e6') }));
+      svg.appendChild(s('text', { x: c.X(x.x) + v * .8, y: c.Y(x.y), fill: vkl ? '#ffffff' : (x.besediloNe || '#15304f'), 'font-size': v, 'font-weight': 600, 'letter-spacing': v * .1, 'font-family': 'IBM Plex Sans, Arial, sans-serif' }, t));
+    },
+    vrstice(svg, x, c) {
+      const f = c.J.poId(c.p.polja, x.polje), vrstice = polne(c, x.polje);
+      const n = Math.max(vrstice.length, 1), rh = Math.min(c.Y(x.h) / n, c.Y(x.h) / 4), v = Math.min(rh * .42, c.W * .03);
+      // pri lestvici je poudarek id poudarka predloge (prva vrstica), sicer id polja z izbrano vrstico
+      const izb = !x.poudarek ? -1 : x.palice ? (c.poudarek(x.poudarek) ? 0 : -1) : Math.min(izbranaVrstica(c, x.poudarek), vrstice.length - 1);
+      const stevila = vrstice.map(r => parseFloat(String(r[f.stolpci[f.stolpci.length - 1].id] || '').replace(/[^\d,.]/g, '').replace(',', '.')) || 0);
+      const max = Math.max(...stevila, 1);
+      vrstice.forEach((r, i) => {
+        const y = c.Y(x.y) + i * rh, oranzno = izb >= 0 && i === izb;
+        if (x.palice) {
+          svg.appendChild(s('rect', { x: c.X(x.x), y: y + rh * .12, width: c.X(x.w) * (.35 + .65 * stevila[i] / max), height: rh * .76, rx: 4, fill: oranzno ? ORANZNA : '#2a5687' }));
+          svg.appendChild(s('text', { x: c.X(x.x) + v * .6, y: y + rh * .5 + v * .35, fill: '#ffffff', 'font-size': v, 'font-weight': 700, 'font-family': 'Space Grotesk, Arial, sans-serif' }, (i + 1) + '. ' + f.stolpci.map(st => r[st.id]).filter(Boolean).join('   ')));
+        } else if (x.krogi) {
+          svg.appendChild(s('rect', { x: c.X(x.x) + v * .45, y: y, width: 3, height: rh, fill: '#d3dfeb' }));
+          svg.appendChild(s('circle', { cx: c.X(x.x) + v * .5, cy: y + rh * .45, r: v * .5, fill: oranzno ? ORANZNA : '#2a5687' }));
+          svg.appendChild(s('text', { x: c.X(x.x) + v * 1.6, y: y + rh * .45 + v * .35, fill: '#172433', 'font-size': v, 'font-family': 'IBM Plex Sans, Arial, sans-serif' }, f.stolpci.map(st => r[st.id]).filter(Boolean).join(' · ')));
+        } else {
+          const [k, vr] = f.stolpci;
+          svg.appendChild(s('text', { x: c.X(x.x), y: y + rh * .55, fill: '#5f7590', 'font-size': v * .8, 'font-weight': 600, 'letter-spacing': v * .08, 'font-family': 'IBM Plex Sans, Arial, sans-serif' }, String(r[k.id] || '').toUpperCase()));
+          svg.appendChild(s('text', { x: c.X(x.x + x.w * .48), y: y + rh * .55, fill: oranzno ? '#b0561a' : '#172433', 'font-size': v, 'font-weight': 700, 'font-family': 'IBM Plex Sans, Arial, sans-serif' }, r[vr.id] || ''));
+        }
+        svg.appendChild(s('rect', { x: c.X(x.x), y: y + rh - 1, width: c.X(x.w), height: 1.5, fill: '#d3dfeb', opacity: x.palice ? 1 : .6 }));
+      });
+    },
+    ploscice(svg, x, c) {
+      const f = c.J.poId(c.p.polja, x.polje), vrstice = polne(c, x.polje);
+      const st = x.stolpcev, vr = Math.max(Math.ceil(vrstice.length / st), 1), rez = c.X(1.5);
+      const pw = (c.X(x.w) - rez * (st - 1)) / st, ph = Math.min((c.Y(x.h) - rez * (vr - 1)) / vr, pw * .7);
+      const izb = Math.min(izbranaVrstica(c, x.poudarek), vrstice.length - 1);
+      vrstice.forEach((r, i) => {
+        const px = c.X(x.x) + (i % st) * (pw + rez), py = c.Y(x.y) + Math.floor(i / st) * (ph + rez);
+        svg.appendChild(s('rect', { x: px, y: py, width: pw, height: ph, rx: 6, fill: '#1f4470' }));
+        svg.appendChild(s('text', { x: px + pw * .08, y: py + ph * .55, fill: i === izb ? '#f0955a' : '#ffffff', 'font-size': ph * .38, 'font-weight': 700, 'font-family': 'Space Grotesk, Arial, sans-serif' }, r[f.stolpci[0].id] || ''));
+        svg.appendChild(s('text', { x: px + pw * .08, y: py + ph * .82, fill: '#b9d0e6', 'font-size': ph * .13, 'font-weight': 600, 'letter-spacing': ph * .01, 'font-family': 'IBM Plex Sans, Arial, sans-serif' }, String(r[f.stolpci[1].id] || '').toUpperCase()));
+      });
+    },
+    koraki(svg, x, c) {
+      const f = c.J.poId(c.p.polja, x.polje), vrstice = polne(c, x.polje), n = Math.max(vrstice.length, 1);
+      const navp = c.e.format === 'navpicno', rez = c.X(2.5);
+      const tw = navp ? c.X(x.w) : (c.X(x.w) - rez * (n - 1)) / n, th = navp ? (c.Y(x.h) - rez * (n - 1)) / n : c.Y(x.h) * .8;
+      const crta = c.poudarek(x.puscice) ? ORANZNA : '#2a5687';
+      vrstice.forEach((r, i) => {
+        const px = c.X(x.x) + (navp ? 0 : i * (tw + rez)), py = c.Y(x.y) + (navp ? i * (th + rez) : 0);
+        svg.appendChild(s('rect', { x: px, y: py, width: tw, height: th, rx: 6, fill: '#ffffff' }));
+        if (i === vrstice.length - 1 && c.poudarek(x.zadnja) && x.zadnja) svg.appendChild(s('rect', { x: px, y: py, width: tw, height: 6, fill: ORANZNA }));
+        const v = Math.min(tw, th) * (navp ? .32 : .2);
+        svg.appendChild(s('text', { x: px + v * .5, y: py + v * 1.2, fill: '#15304f', 'font-size': v, 'font-weight': 700, 'font-family': 'Space Grotesk, Arial, sans-serif' }, String(i + 1)));
+        svg.appendChild(s('text', { x: px + (navp ? v * 1.6 : v * .5), y: py + (navp ? v * 1.1 : v * 2.2), fill: '#172433', 'font-size': v * .42, 'font-weight': 700, 'font-family': 'IBM Plex Sans, Arial, sans-serif' }, r[f.stolpci[0].id] || ''));
+        if (i < vrstice.length - 1) {
+          const ax = navp ? px + tw / 2 : px + tw + rez / 2, ay = navp ? py + th + rez / 2 : py + th / 2;
+          svg.appendChild(s('path', { d: navp ? 'M' + (ax - 8) + ' ' + (ay - 5) + ' L' + ax + ' ' + (ay + 5) + ' L' + (ax + 8) + ' ' + (ay - 5) : 'M' + (ax - 5) + ' ' + (ay - 8) + ' L' + (ax + 5) + ' ' + ay + ' L' + (ax - 5) + ' ' + (ay + 8), fill: 'none', stroke: crta, 'stroke-width': 4 }));
+        }
+      });
+    },
+    motiv(svg, x, c) { antena(svg, x, c.barva(x), c); },
+    pokal(svg, x, c) {
+      const b = c.poudarek(x.poudarek) ? ORANZNA : '#b9d0e6', X0 = c.X(x.x), Y0 = c.Y(x.y), w = c.X(x.w), h = c.Y(x.h);
+      svg.appendChild(s('path', { d: 'M' + X0 + ' ' + Y0 + ' H' + (X0 + w) + ' Q' + (X0 + w) + ' ' + (Y0 + h * .6) + ' ' + (X0 + w / 2) + ' ' + (Y0 + h * .62) + ' Q' + X0 + ' ' + (Y0 + h * .6) + ' ' + X0 + ' ' + Y0 + ' Z', fill: b }));
+      svg.appendChild(s('rect', { x: X0 + w * .44, y: Y0 + h * .6, width: w * .12, height: h * .25, fill: b }));
+      svg.appendChild(s('rect', { x: X0 + w * .25, y: Y0 + h * .85, width: w * .5, height: h * .12, rx: 3, fill: b }));
+    },
+    celice(svg, x, c) {
+      const f = c.J.poId(c.p.polja, x.polje), izb = c.v.polja[x.polje] || { izbrane: [], svoj: '' };
+      const imena = c.J.moznosti(c.P, f).filter(o => izb.izbrane.includes(o.id)).map(o => o.ime)
+        .concat(String(izb.svoj || '').split(';').map(t => t.trim()).filter(Boolean));
+      const n = Math.max(imena.length, 1), st = Math.ceil(Math.sqrt(n)), vr = Math.ceil(n / st);
+      const cw = c.X(x.w) / st, ch = c.Y(x.h) / vr, b = c.barva(x);
+      imena.forEach((ime, i) => {
+        const cx = c.X(x.x) + (i % st) * cw + cw / 2, cy = c.Y(x.y) + Math.floor(i / st) * ch + ch / 2, r = Math.min(cw, ch) * .22;
+        svg.appendChild(s('rect', { x: cx - cw / 2 + 4, y: cy - ch / 2 + 4, width: cw - 8, height: ch - 8, fill: 'none', stroke: '#d3dfeb', 'stroke-width': 2 }));
+        svg.appendChild(s('circle', { cx, cy: cy - r * .3, r, fill: 'none', stroke: b, 'stroke-width': r * .22 }));
+        if (x.poudarek) svg.appendChild(s('circle', { cx: cx + r * .7, cy: cy - r, r: r * .22, fill: ORANZNA }));
+        svg.appendChild(s('text', { x: cx, y: cy + r * 1.6, 'text-anchor': 'middle', fill: '#5f7590', 'font-size': Math.min(cw * .08, 22), 'font-family': 'IBM Plex Sans, Arial, sans-serif' }, ime));
+      });
+    }
+  };
+
+  window.S59DGO_PREDOGLED = { izrisi };
 })();
 </script>
 <script id="vmesnik">
