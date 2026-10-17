@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Požene vse tests/test-*.php v Dockerju.
+# Požene vse tests/test-*.php in test jedra generatorja promptov v Dockerju.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 docker run --rm -v "$PWD:/app:ro" -w /app php:8.3-cli sh -c '
@@ -9,3 +9,5 @@ docker run --rm -v "$PWD:/app:ro" -w /app php:8.3-cli sh -c '
     php "$t" || status=1
   done
   exit $status'
+echo "== tests/prompti.test.mjs"
+docker run --rm -v "$PWD:/app:ro" -w /app node:22-alpine node tests/prompti.test.mjs
