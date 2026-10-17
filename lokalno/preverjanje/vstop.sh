@@ -10,7 +10,13 @@ for _ in $(seq 1 50); do
     exit 1
   fi
   if (exec 3<>/dev/tcp/127.0.0.1/8059) 2>/dev/null; then
-    exec "$@"
+    # Zasedena vrata bi lahko odgovorila tuji proces: socat mora po kratkem premoru še teči.
+    sleep 0.3
+    if kill -0 "$pid" 2>/dev/null; then
+      exec "$@"
+    fi
+    echo "Posredovanje localhost:8059 → wp:80 se ni zagnalo (socat se je ustavil)." >&2
+    exit 1
   fi
   sleep 0.1
 done
