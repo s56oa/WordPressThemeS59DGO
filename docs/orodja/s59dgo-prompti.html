@@ -27,13 +27,13 @@
   :root:not([data-theme="light"]){
     --ozadje:#0f1c2b;--povrsina:#152638;--besedilo:#dbe6f1;--besedilo-2:#b7c9db;--tiha:#8fa9c4;
     --glava:#0a1420;--glava-2:#152638;--glava-3:#1f4470;--glava-tiha:#8fa9c4;
-    --poudarek:#f0955a;--poudarek-besedilo:#f0955a;--crta:#27405a;--koda:#0f1c2b;--opozorilo:#2a2218;
+    --poudarek:#f0955a;--poudarek-besedilo:#f0955a;--crta:#27405a;--koda:#0f1c2b;--opozorilo:#2a2218;color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
   --ozadje:#0f1c2b;--povrsina:#152638;--besedilo:#dbe6f1;--besedilo-2:#b7c9db;--tiha:#8fa9c4;
   --glava:#0a1420;--glava-2:#152638;--glava-3:#1f4470;--glava-tiha:#8fa9c4;
-  --poudarek:#f0955a;--poudarek-besedilo:#f0955a;--crta:#27405a;--koda:#0f1c2b;--opozorilo:#2a2218;
+  --poudarek:#f0955a;--poudarek-besedilo:#f0955a;--crta:#27405a;--koda:#0f1c2b;--opozorilo:#2a2218;color-scheme:dark;
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -3399,10 +3399,22 @@ legend{padding:0;margin-bottom:6px}
     $('gumb-primer').addEventListener('click', () => { const p = tp(); stanje.vrednosti[p.id] = J.primer(P, p, stanje.jezik); izrisiVse(); });
     $('gumb-ponastavi').addEventListener('click', () => { const p = tp(); stanje.vrednosti[p.id] = J.privzeto(P, p); izrisiVse(); });
     const sporoci = t => { $('stanje-datoteke').textContent = t; };
+    // V artefaktu na claude.ai so prenosi prek <a download> blokirani; tam izvoz gre prek zmožnosti »downloads«.
+    let prenosi = null;
+    if (window.claude && window.claude.use) window.claude.use('downloads').then(d => { prenosi = d; }, () => {});
     $('gumb-izvozi').addEventListener('click', () => {
-      const datum = new Date().toISOString().slice(0, 10);
-      const url = URL.createObjectURL(new Blob([JSON.stringify(stanje, null, 2)], { type: 'application/json' }));
-      const a = el('a', { href: url, download: 's59dgo-prompt-' + stanje.predloga + '-' + datum + '.json' });
+      const ime = 's59dgo-prompt-' + stanje.predloga + '-' + new Date().toISOString().slice(0, 10) + '.json';
+      const json = JSON.stringify(stanje, null, 2);
+      if (prenosi) {
+        prenosi.save({ filename: ime, data: json }).then(
+          () => sporoci('Izvoženo.'),
+          e => sporoci(e && e.code === 'declined' ? 'Izvoz preklican.' : 'Izvoz tukaj ni na voljo; nastavitve so shranjene v tem brskalniku.')
+        );
+        return;
+      }
+      if (window.claude) { sporoci('Izvoz tukaj ni na voljo; nastavitve so shranjene v tem brskalniku.'); return; }
+      const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+      const a = el('a', { href: url, download: ime });
       document.body.appendChild(a);
       a.click();
       a.remove();

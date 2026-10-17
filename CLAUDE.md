@@ -10,17 +10,20 @@ Potrjen dizajn: `docs/superpowers/specs/2026-09-09-s59dgo-wordpress-theme-design
 
 Grafika za objave (naslovne slike, infografike, omrežja, ikone): predloge AI promptov v `docs/ai-prompti-grafika.md`, referenčne SVG/PNG v slogu teme v `docs/grafika-referenca/`. Interaktivni vodnik s sestavljalnikom promptov: https://claude.ai/code/artifact/1f8918e8-d624-4fa1-853c-d24127de5d1e
 
+Generator promptov (izpolni predloge iz dokumenta, ena datoteka, deluje brez povezave): `docs/orodja/s59dgo-prompti.html`, objavljen kot artefakt https://claude.ai/artifact/UMSHX2i8n54uMS5ALpKT2B (zmožnost `downloads` za izvoz). Pisave vanj vdela `bin/prompti-pisave.sh`; predloge so v bloku `#podatki` in jih `tests/test-prompti.php` primerja z `docs/ai-prompti-grafika.md` – ob spremembi dokumenta posodobi tudi orodje. Za objavo artefakta odstrani ovoj `<!doctype>…<body>` (artefakt ga doda sam) in objavi kopijo na isti URL.
+
 ## Ukazi
 
 Lokalno ni PHP niti WordPressa; PHP teče prek Dockerja.
 
 ```bash
 bin/lint.sh          # php -l za vse s59dgo/**/*.php v sliki php:8.3-cli
-bin/test.sh          # statični in enotski testi v tests/ (stubi WP funkcij v tests/stubs.php)
+bin/test.sh          # statični in enotski testi v tests/ (stubi WP funkcij v tests/stubs.php) in Node test jedra generatorja promptov (node:22-alpine)
 bin/phpcs.sh         # PHPCS z WordPress Coding Standards v Dockerju (phpcs.xml.dist); bin/phpcs.sh --fix požene phpcbf
 bin/build-zip.sh     # lint + testi + phpcs + dist/s59dgo.zip za nalaganje v WP administracijo
 bin/screenshot.sh    # regenerira s59dgo/screenshot.png iz bin/screenshot.svg (rsvg-convert v Dockerju)
 bin/grafika-referenca.sh  # upodobi docs/grafika-referenca/*.svg v PNG s pisavama teme
+bin/prompti-pisave.sh     # vdela pisave teme kot base64 v docs/orodja/s59dgo-prompti.html
 ```
 
 Nov test: `tests/test-<ime>.php`, ki vključi `tests/preveri.php` (in `tests/stubs.php` za funkcije iz `inc/`).
