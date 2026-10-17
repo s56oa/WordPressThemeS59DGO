@@ -25,13 +25,17 @@ bin/screenshot.sh    # regenerira s59dgo/screenshot.png iz bin/screenshot.svg (r
 bin/grafika-referenca.sh  # upodobi docs/grafika-referenca/*.svg v PNG s pisavama teme
 bin/prompti-pisave.sh     # vdela pisave teme kot base64 v docs/orodja/s59dgo-prompti.html
 bin/prompti-artefakt.sh <pot>  # kopija generatorja brez ovoja <!doctype>…<body> za objavo artefakta
+bin/lokalno.sh gor|dol|obnovi [arhiv]|odpri|pobrisi  # lokalna kopija produkcije v Dockerju: http://localhost:8059
+bin/preveri-lokalno.sh    # kontrole 1–9 teme na lokalni kopiji; poročilo v dist/preverjanje/porocilo.html
 ```
 
 Nov test: `tests/test-<ime>.php`, ki vključi `tests/preveri.php` (in `tests/stubs.php` za funkcije iz `inc/`).
 
 Preizkus poteka na strežniku: zip naloži kot neaktivno temo, preglej prek Videz → Teme → »Predogled v živo«, aktiviraj šele po pregledu. Pred aktivacijo: dodeli meni lokaciji »Glavni meni«, nastavi logotip, napolni gradnike noge (`noga-1..3`), Nastavitve → Branje → 9 objav na stran. Po posodobitvi na 1.2.0 enkrat poženi vtičnik »Regenerate Thumbnails«, da dobijo obstoječe slike izreza 800×520 in 1200×630.
 
-Projektni skilli v `.claude/skills/`: `s59dgo-izdaja-teme` (verzija, zip, merge, tag, GitHub release, namestitev), `s59dgo-generator-promptov` (urejanje in ponovna objava generatorja), `s59dgo-pregled-zive-strani` (crosscheck www.s59dgo.si s Claude in Chrome).
+Lokalna kopija produkcije: `bin/lokalno.sh obnovi` iz najnovejšega arhiva Backuply v `prod_backups/` (ali podanega) postavi WordPress na `http://localhost:8059` (8080 zaseda drug projekt) in izpiše enkratno geslo za lokalnega skrbnika `lokalni`; novo geslo dobiš z ponovnim `obnovi`. `bin/preveri-lokalno.sh` brez ponovne obnove traja ≈ 1 min in zapiše `dist/preverjanje/porocilo.html`, `najdbe.json` in `posnetki/`; najdbe so `napaka` (izhod 1), `opozorilo` ali `ročni korak`, tema se primerja z zadnjim git tagom (lokalna tema `s59dgo-izdana`).
+
+Projektni skilli v `.claude/skills/`: `s59dgo-izdaja-teme` (lokalno preverjanje, verzija, zip, merge, tag, GitHub release, namestitev), `s59dgo-generator-promptov` (urejanje in ponovna objava generatorja), `s59dgo-pregled-zive-strani` (crosscheck www.s59dgo.si s Claude in Chrome).
 
 ## Arhitektura
 
@@ -41,6 +45,7 @@ Projektni skilli v `.claude/skills/`: `s59dgo-izdaja-teme` (verzija, zip, merge,
 - **Mreža objav** je predloga-del `template-parts/mreza.php`, ki jo uporabljajo `home.php`, `index.php`, `archive.php` in `search.php`; `template-parts/kartica.php` je ena kartica znotraj mreže. Domača stran je WP nastavitev »Zadnje objave«, zato mrežo izriše `home.php`, ne `front-page.php`.
 - `functions.php` samo nalaga `inc/setup.php`, `inc/enqueue.php`, `inc/template-tags.php`, `inc/customizer.php` in `inc/druzbena.php`.
 - **Naslovne slike**: kartice v mreži so vedno 20:13 (velikost `s59dgo-kartica` 800×520, CSS `object-fit: cover`), posamezna objava pokaže celo sliko (`large`). `inc/druzbena.php` izpiše oznake Open Graph/Twitter v `wp_head` (slika `s59dgo-deljenje` 1200×630, sicer `large` ali logotip) in se umakne, če so aktivni Yoast SEO, Rank Math ali Jetpack (filter `s59dgo_druzbena_podatki`). Generator promptov mora slediti tem razmerjem.
+- **Lokalna kopija produkcije** (`lokalno/`, Docker Compose): WordPress in baza tečeta v notranjem omrežju brez interneta, `vrata` (socat) objavi samo `127.0.0.1:8059`, internet ima le `prenos` (jedro WP). Podatki produkcije so samo v `prod_backups/` (gitignore) in volumnih `s59dgo-lokalno_*` ter vsebujejo zasebne podatke (uporabniki, komentarji, wp-config): nikoli `git add` iz teh poti; `bin/lokalno.sh pobrisi` volumne izbriše. Tema se vgradi samo za branje iz `s59dgo/`.
 - Nastavitvi v Customizerju (`inc/customizer.php`, razdelek Identiteta spletišča): `s59dgo_naslov_doma` in `s59dgo_podnaslov_doma` (prazno = »Novice s Snežnika« / slogan strani). Razvijalske prilagoditvene točke: filtri `s59dgo_naslov_doma`, `s59dgo_podnaslov_doma` in `s59dgo_noga_besedilo`. Tema nima lastnih tipov vsebine ali meta polj.
 
 ## Konvencije

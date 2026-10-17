@@ -107,3 +107,14 @@ preveri( false !== $regen_k && false !== $regen_d && $regen_k < $izprazni && $re
 preveri( false !== $regen_k && $regen_k < $naslovi_k, 'bin/preveri-lokalno.sh regenerira izreza pred naslovi.php (URL-ji izrezov)' );
 preveri( false === strpos( $naslovi, 'gmdate(' ), 'naslovi.php: datumski arhiv po lokalnem času' );
 preveri( false !== strpos( $naslovi, "'slike'" ), 'naslovi.php izpiše URL-je naslovnih slik' );
+
+// Dokumentacija in korak v skillu izdaje (Task 7).
+$claude = (string) @file_get_contents( $koren . 'CLAUDE.md' );
+$readme = (string) @file_get_contents( $koren . 'README.md' );
+$skill  = (string) @file_get_contents( $koren . '.claude/skills/s59dgo-izdaja-teme/SKILL.md' );
+foreach ( array( 'bin/preveri-lokalno.sh', 'bin/lokalno.sh', 'prod_backups/', 'http://localhost:8059' ) as $iskano ) {
+	preveri( false !== strpos( $claude, $iskano ), "CLAUDE.md vsebuje {$iskano}" );
+}
+preveri( false !== strpos( $readme, 'bin/preveri-lokalno.sh' ) && false !== strpos( $readme, 'zasebne podatke' ), 'README.md opisuje lokalno preverjanje in zasebne podatke' );
+preveri( false !== strpos( $skill, 'bin/preveri-lokalno.sh' ) && false !== strpos( $skill, 'prod_backups/' ), 'SKILL.md izdaje vsebuje bin/preveri-lokalno.sh in prod_backups/' );
+preveri( strpos( $skill, 'bin/preveri-lokalno.sh' ) < strpos( $skill, '**Preverjanje in zip**' ), 'SKILL.md: lokalno preverjanje je pred korakom Preverjanje in zip' );

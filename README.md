@@ -48,6 +48,19 @@ bin/screenshot.sh    # regenerira s59dgo/screenshot.png iz bin/screenshot.svg
 bin/build-zip.sh     # lint + testi + phpcs + dist/s59dgo.zip
 ```
 
+### Lokalno preverjanje
+
+Kopijo produkcije (Backuply arhiv v `prod_backups/`) zaženete v Dockerju in na njej preverite temo, preden jo naložite na strežnik:
+
+```bash
+bin/lokalno.sh obnovi            # postavi stran iz najnovejšega arhiva; izpiše geslo za skrbnika »lokalni«
+bin/lokalno.sh gor|dol|odpri     # zagon, ustavitev, odprtje http://localhost:8059
+bin/preveri-lokalno.sh           # kontrole in poročilo dist/preverjanje/porocilo.html (≈ 1 min)
+bin/lokalno.sh pobrisi           # izbriše lokalne podatke (volumni s59dgo-lokalno_*)
+```
+
+Stran in baza tečeta v Dockerjevem omrežju brez interneta. Backup in volumni vsebujejo zasebne podatke (uporabniki, komentarji, `wp-config.php`): `prod_backups/` je v `.gitignore`, iz teh poti nikoli ne dodajajte datotek v git.
+
 Struktura:
 
 ```

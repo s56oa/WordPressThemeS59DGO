@@ -18,9 +18,10 @@ Tema je v produkciji na www.s59dgo.si (prej .org, preusmeritev od 2026-09-13). N
 1. **Verzija** (semver: nova funkcija = minor, popravek = patch):
    - `s59dgo/style.css` → `Version: X.Y.Z`
    - `s59dgo/readme.txt` → `Stable tag: X.Y.Z` in nov blok na vrhu `== Changelog ==` (`= X.Y.Z =`, alineje v slovenščini, napisane za urednika strani, ne za razvijalca).
-2. **Preverjanje in zip**: `bin/build-zip.sh` požene lint, `bin/test.sh` (PHP testi + Node test generatorja promptov), PHPCS in ustvari `dist/s59dgo.zip`. Izpis preusmeri v datoteko in preberi rep; ob napaki popravi vzrok, ne testa.
-3. **Commit** na veji (sporočilo v slovenščini, npr. `Tema X.Y.Z: …`), nato združitev: `git checkout main && git pull --ff-only && git merge --ff-only <veja>`; po združitvi še enkrat `bin/test.sh`.
-4. **Push in release** (po potrditvi):
+2. **Lokalno preverjanje**: če v `prod_backups/` obstaja arhiv, zaženi `bin/lokalno.sh obnovi` (če je arhiv novejši od zadnje obnove) in `bin/preveri-lokalno.sh`; poročilo je v `dist/preverjanje/porocilo.html`. Ob izhodni kodi 1 (najdbe `napaka`) izdaje ne nadaljuj. Če je arhiv starejši od 30 dni ali ga ni, to povej naročniku in predlagaj nov backup v Backuply. Najdbe `ročni korak` iz poročila dodaj v navodila za namestitev.
+3. **Preverjanje in zip**: `bin/build-zip.sh` požene lint, `bin/test.sh` (PHP testi + Node test generatorja promptov), PHPCS in ustvari `dist/s59dgo.zip`. Izpis preusmeri v datoteko in preberi rep; ob napaki popravi vzrok, ne testa.
+4. **Commit** na veji (sporočilo v slovenščini, npr. `Tema X.Y.Z: …`), nato združitev: `git checkout main && git pull --ff-only && git merge --ff-only <veja>`; po združitvi še enkrat `bin/test.sh`.
+5. **Push in release** (po potrditvi):
    ```bash
    git push origin main
    git tag -a vX.Y.Z -m "s59dgo X.Y.Z"
@@ -28,7 +29,7 @@ Tema je v produkciji na www.s59dgo.si (prej .org, preusmeritev od 2026-09-13). N
    gh release create vX.Y.Z dist/s59dgo.zip --title "s59dgo X.Y.Z" --notes "<changelog alineje>"
    ```
    `gh` je prijavljen kot s56oa. Nikoli `--force`; zavrnjen push pomeni, da se je remote premaknil – razišči.
-5. Pobriši združeno vejo (`git branch -d`).
+6. Pobriši združeno vejo (`git branch -d`).
 
 ## Kar sporočiš uporabniku na koncu
 
@@ -40,5 +41,6 @@ Tema je v produkciji na www.s59dgo.si (prej .org, preusmeritev od 2026-09-13). N
 ## Pasti
 
 - Ne dodajaj nesledenih datotek v korenu (`AGENTS.md`, `trenutni_logotipi/`, `bin/dokumenti/`): niso del teme, `trenutni_logotipi/` vsebuje pravo korespondenco društva, repozitorij pa je javen.
+- `prod_backups/` in Dockerjevi volumni `s59dgo-lokalno_*` vsebujejo zasebne podatke produkcije (uporabniki, komentarji, wp-config): nikoli `git add` iz teh poti, poročila in posnetke iz `dist/preverjanje/` ne prilagaj izdaji.
 - Ne predlagaj wp-env, Sass, FSE, child teme ali spremembe števila stolpcev – uporabnik je to že zavrnil.
 - Veja `dokumenti` (Wordove predloge) je ločen sklop; ne združuj je skupaj s temo brez izrecne zahteve.
