@@ -1,7 +1,7 @@
 # Spec: Lokalni WordPress za preverjanje teme S59DGO
 
 Datum: 2026-10-17
-Stanje: osnutek dizajna, čaka potrditev naročnika
+Stanje: potrjen dizajn (2026-10-17), dopolnjen po pregledu izvajalca; pripravljeno za načrt implementacije
 
 ## 1. Namen
 
@@ -26,6 +26,10 @@ ne kontaktira.
   avtomatizacije.
 - Kontrole 1–9 iz seznama v razdelku 5 (brez preizkusa nadgradnje teme).
 - Brez wp-env (zavrnjeno že ob prvi verziji teme).
+- Pluginsi in mu-plugin se iz backupa skopirajo **takšni, kot so**, in lokalno
+  izvajajo (ne sveže z wordpress.org).
+- Zunanji klici so blokirani **strogo**: WordPress in baza v Docker omrežju brez
+  interneta, brskalnik zunanje zahteve zabeleži in prekine (razdelek 4.1).
 
 ## 3. Cilji, ne-cilji, anti-cilji
 
@@ -69,6 +73,20 @@ ne kontaktira.
 Vse slike tečejo na arm64 (preverjeno 2026-10-17). Ime projekta Compose:
 `s59dgo-lokalno`.
 
+**Omrežje.** `db`, `wp`, `cli`, `validator` in `brskalnik` so samo v notranjem
+omrežju (`internal: true`), brez dostopa do interneta in DNS zunaj Dockerja.
+Port 8080 je objavljen samo na `127.0.0.1` gostitelja. Edini korak z internetom
+je prenos jedra WordPressa ob obnovi (4.3, korak 2), ki teče v ločenem
+enkratnem vsebniku `prenos` na privzetem omrežju in piše samo v volumen jedra;
+ta vsebnik nima dostopa do baze in ne izvaja kode iz backupa.
+
+Brskalnik v vsebniku doseže WordPress prek notranjega imena (npr. `wp`), stran
+pa mora delovati na `http://localhost:8080`: Playwright preslika `localhost:8080`
+na `wp:80` (npr. `--host-resolver-rules` ali proxy v vsebniku), da so URL-ji v
+HTML enaki kot v brskalniku na Macu. Vsaka zahteva na drug izvor se v Playwrightu
+zabeleži in prekine (`route.abort`); kontroli 7 in 8 zato delata z
+zabeleženimi poskusi, vdelave so na posnetkih prazne.
+
 ### 4.2 Kje so podatki
 
 - Baza in celotna namestitev WordPressa (`/var/www/html`, vključno z
@@ -78,7 +96,7 @@ Vse slike tečejo na arm64 (preverjeno 2026-10-17). Ime projekta Compose:
 - Začasne datoteke obnove (razpakiran arhiv) gredo v volumen ali v sistemski
   temp, nikoli v repozitorij; po obnovi se pobrišejo.
 - Poročilo preverjanja: `dist/preverjanje/` (že v `.gitignore` prek `dist/`).
-  Posnetki zaslona vsebujejo vsebino javne strani, ne zasebnih podatkov.
+  Posnetki zaslona vsebujejo samo javno vsebino: izbor naslovov v razdelku 5 upošteva le objavljene (`publish`) objave in strani.
 
 ### 4.3 Obnova iz backupa (`bin/lokalno.sh obnovi [arhiv]`)
 
@@ -88,8 +106,13 @@ Brez argumenta vzame najnovejši `prod_backups/*.tar.gz`.
    iz repozitorija – in brez map Backuply z arhivi) in
    `wp-includes/version.php` (samo za verzijo jedra).
 2. **Ne vzame** `wp-config.php`, `.htaccess` in jedra WordPressa iz arhiva. Jedro
-   naloži sveže z WP-CLI v isti verziji, kot je na produkciji (iz `version.php`,
-   2026-10-17: 7.1.3) – po vdoru 2026-09-03 ne zaupamo kopiji jedra s strežnika.
+   naloži sveže v isti verziji, kot je na produkciji (iz `version.php`,
+   2026-10-17: 7.1.3), v vsebniku `prenos` (4.1) – po vdoru 2026-09-03 ne zaupamo
+   kopiji jedra s strežnika. Pluginsi, mu-plugin, `uploads/`, `languages/`,
+   `custom_web_apps/` in ostale mape `wp-content/` se skopirajo takšne, kot so
+   (odločitev naročnika). Vsaka `.php` datoteka pod `uploads/` se kljub temu
+   skopira, a obnova jo izpiše, poročilo pa jo navede kot opozorilo
+   »preveri na produkciji« (v `uploads/` PHP ne sodi).
 3. `wp-config.php` je lokalen, ustvarjen ob obnovi: lokalni podatki za bazo,
    nove soli, `WP_DEBUG`/`WP_DEBUG_LOG` vklopljen, `WP_DEBUG_DISPLAY` izklopljen,
    `WP_ENVIRONMENT_TYPE=local`, `WP_HTTP_BLOCK_EXTERNAL=true`,
@@ -107,9 +130,32 @@ Brez argumenta vzame najnovejši `prod_backups/*.tar.gz`.
    produkcijskih uporabnikov in njihovih hashov ne spreminja.
 8. Pravila za permalinke (`.htaccess`) ustvari WP-CLI (`wp rewrite flush --hard`),
    struktura ostane `/%year%/%monthnum%/%day%/%postname%/`.
+9. **Posnetek stanja produkcije.** Pred kakršno koli spremembo, ki jo naredijo
+   kontrole, obnova zapiše `stanje-produkcije.json` v volumen: ime in čas
+   arhiva, verzija jedra, predpona tabel, seznam slik brez izrezov
+   `s59dgo-kartica`/`s59dgo-deljenje`, vrednosti nastavitev iz kontrole 5,
+   seznam `.php` v `uploads/`. Ročni koraki v poročilu (kontroli 1 in 5) se
+   berejo iz tega posnetka, ne iz trenutnega stanja, zato ostanejo pravilni
+   tudi po lokalni regeneraciji slik.
+10. Predpono tabel prebere iz `softsql.sql` (2026-10-17: `wp_`).
+11. Zamenjava domen gre od najdaljšega vzorca proti krajšemu
+    (`https://www.s59dgo.si` → `http://www.s59dgo.si` → `//www.s59dgo.si`, enako
+    za `s59dgo.org`), da ne nastane `https://http://localhost:8080`; brez gole
+    zamenjave `s59dgo.org`/`s59dgo.si` brez `//`.
 
 Ostali ukazi: `gor`, `dol`, `odpri` (odpre brskalnik), `pobrisi` (odstrani
 volumne – vse lokalne podatke produkcije).
+
+**Ponovna uporaba.** `bin/preveri-lokalno.sh` ne obnavlja vsakič: dela na
+obstoječih volumnih (cilj < 5 min velja brez obnove). Pred začetkom:
+- če obnova še ni bila narejena → konča z navodilom `bin/lokalno.sh obnovi`;
+- če je v `prod_backups/` novejši arhiv od tistega v `stanje-produkcije.json`
+  → opozori in predlaga obnovo (ne obnovi sam);
+- spremembe, ki jih naredijo kontrole (regenerirane slike, tema
+  `s59dgo-izdana`, `theme_mods_s59dgo-izdana`, dnevnik 404 Redirection,
+  `debug.log`), so dovoljene na lokalni kopiji; `debug.log` se pred vsakim
+  zagonom izprazni, tema `s59dgo-izdana` in njeni `theme_mods` se vsakič
+  pripravijo na novo.
 
 ## 5. Kontrole (`bin/preveri-lokalno.sh`)
 
@@ -125,12 +171,12 @@ Vsaka najdba ima stopnjo: **napaka** (blokira, izhodna koda 1), **opozorilo**
 | # | Kontrola | Kaj preveri | Stopnja |
 |---|---|---|---|
 | 1 | Naslovne slike | Vsaka objava z naslovno sliko ima izreza `s59dgo-kartica` 800×520 in `s59dgo-deljenje` 1200×630 v metapodatkih in na disku. Manjkajoči → ročni korak »Regenerate Thumbnails« s seznamom objav. Nato lokalno `wp media regenerate` za te slike in preveri, da kartica v mreži dobi sliko 800×520 (ne `full`/`large`). Seznam slik, katerih izvirnik ni 20:13 in se bo opazno obrezal (> 15 % višine ali širine), z miniaturami v poročilu. | kartica brez prave velikosti po regeneraciji = napaka; ostalo ročni korak / opozorilo |
-| 2 | Vrste strani | Vsak odkrit naslov vrne pričakovano kodo (200, 404, 410); `debug.log` med preverjanjem ne dobi novih vrstic s poti `themes/s59dgo`; brskalnik ne javi napak JS v konzoli. | napaka; opozorila PHP iz pluginov/jedra = opozorilo |
+| 2 | Vrste strani | Vsak odkrit naslov vrne pričakovano kodo (200, 404, 410); `debug.log` med preverjanjem ne dobi novih vrstic s poti `themes/s59dgo`; brskalnik ne javi napak JS v konzoli. | napaka za PHP s poti teme in JS napake iz `themes/s59dgo/` ali vrstičnih skript teme; PHP/JS iz pluginov, jedra ali vsebine = opozorilo |
 | 3 | Veljaven HTML | Izrisan HTML vseh naslovov skozi Nu validator. Napake se primerjajo z izdano verzijo teme (primerjava kot pri 8): nove napake = napaka, enake kot prej (večinoma vsebina objav) = opozorilo. | napaka / opozorilo |
 | 4 | Open Graph | Na objavah: `og:title`, `og:description` (ni prazen), `og:image` z `og:image:width/height`, za objave z izrezom 1200×630; vsaka oznaka največ enkrat; `twitter:card` prisoten. | napaka |
 | 5 | Nastavitve | `posts_per_page` = 9, meni dodeljen lokaciji `glavni`, logotip nastavljen, gradniki v `noga-1..3`, aktivna tema `s59dgo`. Vrednosti so s produkcije. | ročni korak |
 | 6 | Utrjevanje | `xmlrpc.php` ne sprejema klicev; `/wp-json/wp/v2/users` brez prijave ni na voljo; `/wp-json/batch/v1` ni na voljo; avtorski arhiv 410; `?author__not_in=1` 403; v `<head>` ni `generator`. | napaka |
-| 7 | Zunanji klici | Brskalnik zabeleži vse zahteve na vseh naslovih. Zahteva na drugo domeno, ki izvira iz teme (head, CSS, JS teme) = napaka; iz vsebine objave (vdelava, slika v besedilu) = opozorilo z imenom objave. | napaka / opozorilo |
+| 7 | Zunanji klici | Brskalnik zabeleži vse poskuse zahtev na drug izvor (prekinjene, 4.1) na vseh naslovih. Zahteva na drugo domeno, ki izvira iz teme (head, CSS, JS teme) = napaka; iz vsebine objave (vdelava, slika v besedilu) = opozorilo z imenom objave. | napaka / opozorilo |
 | 8 | Primerjava posnetkov | Posnetki domače strani, objave s sliko, strani, arhiva, iskanja in 404 pri širini 390 px in 1280 px, v svetlem in temnem načinu, za izdano verzijo teme (zadnji git tag) in za trenutno `s59dgo/`. Poročilo pokaže pare drug ob drugem s sliko razlik in deležem spremenjenih pikslov. | opozorilo (spremembe so lahko namerne) |
 | 9 | Dostopnost | axe-core na istih naslovih in obeh barvnih načinih. Primerjava z izdano verzijo kot pri 3: nove kršitve stopnje `serious`/`critical` = napaka, ostale = opozorilo. | napaka / opozorilo |
 
@@ -191,3 +237,8 @@ produkcijo.
 - Brez anonimizacije podatkov (ostanejo samo na tem računalniku).
 - Primerjava z zadnjim git tagom kot »izdano verzijo«.
 - Stopnje napaka/opozorilo/ročni korak v tabeli v razdelku 5; port 8080.
+- Ločitev JS napak teme od ostalih pri kontroli 2 (po pregledu izvajalca).
+- Preverjanje dela na obstoječih volumnih, ročni koraki iz posnetka
+  `stanje-produkcije.json` (po pregledu izvajalca).
+- `.php` v `uploads/` se skopira, a izpiše kot opozorilo.
+- V poročilo (mapa v Synology Drive) gredo samo objavljene objave in strani.
