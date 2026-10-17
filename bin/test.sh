@@ -11,5 +11,7 @@ docker run --rm -v "$PWD:/app:ro" -w /app php:8.3-cli sh -c '
   exit $status'
 echo "== tests/prompti.test.mjs"
 docker run --rm -v "$PWD:/app:ro" -w /app node:22-alpine node tests/prompti.test.mjs
+echo "== tests/lokalno.test.mjs"
+docker run --rm -v "$PWD:/app:ro" -w /app node:22-alpine node tests/lokalno.test.mjs
 echo "== tests/lokalno.test.sh"
 docker run --rm -v "$PWD:/app:ro" -w /app bash:5.2 bash tests/lokalno.test.sh
