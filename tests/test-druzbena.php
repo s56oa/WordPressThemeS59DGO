@@ -54,6 +54,21 @@ $p = s59dgo_druzbena_podatki();
 preveri( ! isset( $p['og:image'] ) && 'summary' === $p['twitter:card'], 'brez slike: ni og:image, twitter:card summary' );
 preveri( 'Ilirska Bistrica · S59DGO' === $p['og:description'], 'brez izvlečka: opis strani' );
 
+// Brez ročnega izvlečka: začetek vsebine brez blokovnih komentarjev in kratkih kod, do 30 besed.
+$vsebina = '<!-- wp:paragraph --><p>Na Sviščakih [galerija id="3"] smo postavili <strong>anteno</strong>.</p><!-- /wp:paragraph -->';
+s59dgo_test_ponastavi( array( 'is_singular' => true, 'title' => 'T', 'content' => $vsebina ) );
+$p = s59dgo_druzbena_podatki();
+preveri( 'Na Sviščakih smo postavili anteno.' === $p['og:description'], 'brez izvlečka: opis iz vsebine brez blokov, kratkih kod in HTML' );
+s59dgo_test_ponastavi( array( 'is_singular' => true, 'title' => 'T', 'content' => str_repeat( 'beseda ', 40 ) ) );
+$p = s59dgo_druzbena_podatki();
+preveri( 30 === count( explode( ' ', rtrim( $p['og:description'], '…' ) ) ) && '…' === mb_substr( $p['og:description'], -1 ), 'brez izvlečka: opis skrajšan na 30 besed' );
+preveri( false === strpos( $koda, 'get_the_excerpt' ), 'druzbena.php ne kliče get_the_excerpt (filtri the_content v <head>)' );
+
+// Objava z geslom: vsebina ne pride v opis.
+s59dgo_test_ponastavi( array( 'is_singular' => true, 'title' => 'T', 'excerpt' => 'Skrito', 'content' => 'Skrito', 'geslo' => true ) );
+$p = s59dgo_druzbena_podatki();
+preveri( 'Ilirska Bistrica · S59DGO' === $p['og:description'], 'z geslom: opis strani namesto vsebine' );
+
 // Domača stran.
 s59dgo_test_ponastavi( array( 'is_home' => true ) );
 $p = s59dgo_druzbena_podatki();

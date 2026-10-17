@@ -49,6 +49,11 @@ preveri( 'O društvu' === $t['naslov'], 'stran: naslov' );
 preveri( false === $t['velik'], 'stran: nizek trak' );
 preveri( '' === $t['meta'], 'stran: brez meta' );
 
+// Objava brez naslova → rezervni naslov, ne prazen <h1>.
+s59dgo_test_ponastavi( array( 'is_singular' => true, 'title' => '  ' ) );
+$t = s59dgo_trak_podatki();
+preveri( '(brez naslova)' === $t['naslov'], 'brez naslova: rezervni naslov' );
+
 // Objava s kategorijo in datumom.
 $kategorija = (object) array( 'term_id' => 5, 'name' => 'Dogodki', 'slug' => 'dogodki' );
 s59dgo_test_ponastavi( array( 'is_singular' => true, 'is_single' => true, 'title' => 'Vabilo', 'categories' => array( $kategorija ), 'date' => '2026-05-28' ) );

@@ -42,6 +42,22 @@ if ( ! function_exists( 's59dgo_druzbena_slika' ) ) :
 	}
 endif;
 
+if ( ! function_exists( 's59dgo_druzbena_izvlecek' ) ) :
+	/**
+	 * Opis za deljenje: ročni izvleček ali začetek vsebine, brez filtrov the_content v <head>.
+	 *
+	 * @return string Do 30 besed brez HTML; prazno za objavo z geslom.
+	 */
+	function s59dgo_druzbena_izvlecek() {
+		$objava = get_post();
+		if ( ! $objava || post_password_required( $objava ) ) {
+			return '';
+		}
+		$besedilo = has_excerpt( $objava ) ? $objava->post_excerpt : strip_shortcodes( excerpt_remove_blocks( $objava->post_content ) );
+		return wp_trim_words( wp_strip_all_tags( $besedilo ), 30, '…' );
+	}
+endif;
+
 if ( ! function_exists( 's59dgo_druzbena_podatki' ) ) :
 	/**
 	 * Vrednosti oznak za trenutno stran; prazno za arhive, iskanje in 404.
@@ -53,7 +69,7 @@ if ( ! function_exists( 's59dgo_druzbena_podatki' ) ) :
 		$opis = get_bloginfo( 'description' );
 
 		if ( is_singular() ) {
-			$izvlecek = wp_trim_words( wp_strip_all_tags( get_the_excerpt() ), 30, '…' );
+			$izvlecek = s59dgo_druzbena_izvlecek();
 			$p        = array(
 				'og:type'        => 'article',
 				'og:title'       => wp_strip_all_tags( get_the_title() ),

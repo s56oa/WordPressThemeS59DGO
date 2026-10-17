@@ -22,7 +22,7 @@ defined( 'ABSPATH' ) || exit;
 			<?php
 			the_posts_pagination(
 				array(
-					'prev_text'          => '‹ ' . __( 'Novejše', 's59dgo' ),
+					'prev_text'          => '‹ ' . __( 'Novejše objave', 's59dgo' ),
 					'next_text'          => __( 'Starejše objave', 's59dgo' ) . ' ›',
 					'screen_reader_text' => __( 'Navigacija po objavah', 's59dgo' ),
 				)

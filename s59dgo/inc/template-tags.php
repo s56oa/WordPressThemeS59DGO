@@ -114,14 +114,17 @@ if ( ! function_exists( 's59dgo_trak_podatki' ) ) :
 			if ( '' === $podnaslov ) {
 				$podnaslov = get_bloginfo( 'description' );
 			}
-			$podatki['naslov']    = apply_filters( 's59dgo_naslov_doma', $naslov );
-			$podatki['podnaslov'] = apply_filters( 's59dgo_podnaslov_doma', $podnaslov );
+			$podatki['naslov']    = (string) apply_filters( 's59dgo_naslov_doma', $naslov );
+			$podatki['podnaslov'] = (string) apply_filters( 's59dgo_podnaslov_doma', $podnaslov );
 		} elseif ( is_archive() ) {
 			$podatki['naslov']    = wp_strip_all_tags( get_the_archive_title() );
 			$podatki['podnaslov'] = wp_strip_all_tags( get_the_archive_description() );
 		} elseif ( is_singular() ) {
 			$podatki['naslov'] = get_the_title();
 			$podatki['velik']  = false;
+			if ( '' === trim( $podatki['naslov'] ) ) {
+				$podatki['naslov'] = __( '(brez naslova)', 's59dgo' );
+			}
 			if ( is_single() ) {
 				$podatki['meta'] = s59dgo_kategorija() . s59dgo_datum();
 			}

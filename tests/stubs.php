@@ -22,6 +22,8 @@ $GLOBALS['s59dgo_test'] = array(
 	'date'                => '2026-07-08',
 	'theme_mods'          => array(),
 	'excerpt'             => '',
+	'content'             => '',
+	'geslo'               => false,
 	'slike'               => array(),
 	'alt'                 => '',
 	'bloginfo'            => array(
@@ -39,7 +41,7 @@ function s59dgo_test_ponastavi( array $prepisi = array() ) {
 		'is_singular' => false, 'is_single' => false, 'search_query' => '', 'found_posts' => 0,
 		'title' => '', 'archive_title' => '', 'archive_description' => '', 'categories' => array(),
 		'has_thumbnail' => false, 'date' => '2026-07-08', 'theme_mods' => array(),
-		'excerpt' => '', 'slike' => array(), 'alt' => '',
+		'excerpt' => '', 'content' => '', 'geslo' => false, 'slike' => array(), 'alt' => '',
 		'bloginfo' => array( 'name' => 'Radio klub Snežnik', 'description' => 'Ilirska Bistrica · S59DGO' ),
 	);
 	$GLOBALS['s59dgo_test'] = array_merge( $privzeto, $prepisi );
@@ -76,7 +78,11 @@ function get_theme_mod( $kljuc, $privzeto = false ) { $m = s59dgo_t( 'theme_mods
 function get_permalink() { return 'https://example.test/objava/'; }
 function is_front_page() { return false; }
 function home_url( $pot = '' ) { return 'https://example.test' . $pot; }
-function get_the_excerpt() { return s59dgo_t( 'excerpt' ); }
+function get_post() { return (object) array( 'post_excerpt' => s59dgo_t( 'excerpt' ), 'post_content' => s59dgo_t( 'content' ) ); }
+function has_excerpt( $objava = null ) { return '' !== s59dgo_t( 'excerpt' ); }
+function post_password_required( $objava = null ) { return s59dgo_t( 'geslo' ); }
+function excerpt_remove_blocks( $vsebina ) { return preg_replace( '/<!--.*?-->/s', '', $vsebina ); }
+function strip_shortcodes( $vsebina ) { return preg_replace( '/\[[^\]]*\]/', '', $vsebina ); }
 function get_post_thumbnail_id() { return 5; }
 function wp_get_attachment_image_src( $id, $velikost = 'thumbnail' ) { $s = s59dgo_t( 'slike' ); return isset( $s[ $velikost ] ) ? $s[ $velikost ] : false; }
 function get_post_meta( $id, $kljuc = '', $en = false ) { return s59dgo_t( 'alt' ); }

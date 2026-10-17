@@ -38,6 +38,9 @@ Vključeni viri:
 * Oznake Open Graph in Twitter za deljenje na družbenih omrežjih (naslovna slika v izrezu 1200×630, sicer logotip strani); tema se umakne, če jih izpisuje Yoast SEO, Rank Math ali Jetpack.
 * Nova velikost slike s59dgo-deljenje (1200×630). Za obstoječe slike enkrat poženi vtičnik »Regenerate Thumbnails«.
 * Spletni naslov teme in avtorja je www.s59dgo.si.
+* Popravek: zaprt element trak__meta v traku posamezne objave (od 1.1.0).
+* Opis za deljenje se sestavi iz ročnega izvlečka ali začetka vsebine, brez filtrov vsebine v glavi strani.
+* Objava brez naslova pokaže »(brez naslova)«; paginacija »‹ Novejše objave« / »Starejše objave ›«.
 
 = 1.1.0 =
 * Naslov in podnaslov domače strani sta nastavljiva v Videz → Prilagodi → Identiteta spletišča.

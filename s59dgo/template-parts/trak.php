@@ -16,7 +16,7 @@ $s59dgo_trak = s59dgo_trak_podatki();
 			<p class="trak__podnaslov"><?php echo esc_html( $s59dgo_trak['podnaslov'] ); ?></p>
 		<?php endif; ?>
 		<?php if ( '' !== $s59dgo_trak['meta'] ) : ?>
-			<div class="trak__meta"><?php echo wp_kses( $s59dgo_trak['meta'], s59dgo_dovoljen_html_meta() ); ?>
+			<div class="trak__meta"><?php echo wp_kses( $s59dgo_trak['meta'], s59dgo_dovoljen_html_meta() ); ?></div>
 		<?php endif; ?>
 	</div>
 	<svg class="trak__greben" viewBox="0 0 1440 90" preserveAspectRatio="none" aria-hidden="true" focusable="false">
