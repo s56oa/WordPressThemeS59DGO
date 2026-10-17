@@ -26,7 +26,7 @@ export function ubezi(s) {
 }
 
 // Razkodira entitete iz WordPressovih naslovov (npr. &#8211;); izpis gre nato spet skozi ubezi().
-function razkodiEntitete(s) {
+export function razkodiEntitete(s) {
   const imena = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
   return String(s).replace(/&(?:#(\d+)|#x([0-9a-f]+)|([a-z]+));/gi, (cel, d, h, ime) => {
     if (d || h) {
@@ -170,8 +170,7 @@ export function povzetek(najdbe) {
   return { napake, opozorila: stej('opozorilo'), rocni: stej('rocni-korak'), izhod: napake > 0 ? 1 : 0 };
 }
 
-// Stopnja »opomba« je samo pojasnilo v poročilu: ne šteje v povzetek in ne blokira.
-const ST_OZNAKA = { 'napaka': 'Napaka', 'opozorilo': 'Opozorilo', 'rocni-korak': 'Ročni korak', 'opomba': 'Opomba' };
+const ST_OZNAKA = { 'napaka': 'Napaka', 'opozorilo': 'Opozorilo', 'rocni-korak': 'Ročni korak' };
 
 // Miniature v podrobnostih najdbe (kontrola 1): relativni poti do slik v mapi poročila.
 function miniature(m) {
@@ -182,7 +181,8 @@ function miniature(m) {
     : '';
 }
 
-export function porociloHtml({ cas, arhiv, najdbe, posnetki = [] }) {
+// opombe = [{ kontrola, besedilo }]: pojasnila brez stopnje (niso najdbe), izpisana pod svojo kontrolo.
+export function porociloHtml({ cas, arhiv, najdbe, posnetki = [], opombe = [] }) {
   const u = (s) => ubezi(razkodiEntitete(s));
   const p = povzetek(najdbe);
   const rocni = [...new Set(najdbe.filter((n) => n.stopnja === 'rocni-korak').map((n) => n.sporocilo))];
@@ -195,7 +195,8 @@ export function porociloHtml({ cas, arhiv, najdbe, posnetki = [] }) {
         return `<tr class="${ubezi(n.stopnja)}"><td>${u(ST_OZNAKA[n.stopnja] || n.stopnja)}</td><td>${u(n.sporocilo)}</td><td>${pod}</td></tr>`;
       }).join('')}</tbody></table>`
       : '<p class="ok">Brez najdb.</p>';
-    return `<section><h2>${k}. ${ubezi(naslov)}</h2>${telo}</section>`;
+    const pojasnila = opombe.filter((o) => o.kontrola === Number(k)).map((o) => `<p class="opomba">Opomba: ${u(o.besedilo)}</p>`).join('');
+    return `<section><h2>${k}. ${ubezi(naslov)}</h2>${telo}${pojasnila}</section>`;
   }).join('\n');
   const galerija = posnetki.length
     ? `<section><h2>Posnetki</h2><div class="galerija">${posnetki.map((s) => `<figure><figcaption>${u(s.ime)}: ${ubezi((s.delez * 100).toFixed(2))} % spremenjenih pikslov</figcaption>`
@@ -207,7 +208,7 @@ export function porociloHtml({ cas, arhiv, najdbe, posnetki = [] }) {
 <style>
 body{font:15px/1.5 system-ui,sans-serif;margin:0 auto;max-width:72rem;padding:1rem;color:#1a1a1a;background:#fff}
 table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:.3rem .5rem;text-align:left;vertical-align:top}
-tr.napaka td:first-child{color:#b00020;font-weight:700}tr.opozorilo td:first-child{color:#8a5a00;font-weight:700}tr.rocni-korak td:first-child{color:#0b5394;font-weight:700}tr.opomba td:first-child{color:#555}
+tr.napaka td:first-child{color:#b00020;font-weight:700}tr.opozorilo td:first-child{color:#8a5a00;font-weight:700}tr.rocni-korak td:first-child{color:#0b5394;font-weight:700}.opomba{color:#555;font-style:italic}
 .trojica{display:flex;gap:.5rem}.miniature{display:flex;gap:.5rem;margin-top:.3rem}.miniature img{max-width:12rem;height:auto;border:1px solid #ccc}.trojica img{max-width:32%;height:auto}code{font-size:12px;word-break:break-all}
 @media (prefers-color-scheme:dark){body{background:#111;color:#eee}td,th{border-color:#444}}
 </style></head><body>

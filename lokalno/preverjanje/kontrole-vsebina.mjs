@@ -130,7 +130,6 @@ export async function kontrola3(kontekst) {
   };
 
   const najdbe = [];
-  const trenutne = [];
   const izdane = [];
   const opis = new Map(); // ključ → { vrsta, url, sporocilo, vrstica, izsek, pojavitev }
   for (const { vrsta, url } of kontekst.naslovi ?? []) {
@@ -158,7 +157,6 @@ export async function kontrola3(kontekst) {
     }
     for (const m of t) {
       const kljuc = `${vrsta}: ${m.message}`;
-      trenutne.push(kljuc);
       if (opis.has(kljuc)) opis.get(kljuc).pojavitev++;
       else opis.set(kljuc, { vrsta, url, sporocilo: m.message, vrstica: m.lastLine, izsek: String(m.extract ?? '').slice(0, 200), pojavitev: 1 });
     }

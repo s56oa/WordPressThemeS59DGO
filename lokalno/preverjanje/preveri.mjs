@@ -2,7 +2,7 @@
 // Prebere /stanje/naslovi.json in /stanje/stanje-produkcije.json, požene kontrole,
 // zapiše /porocilo/porocilo.html in /porocilo/najdbe.json ter natisne povzetek.
 import { readFile, writeFile } from 'node:fs/promises';
-import { najdba, odkrijNaslove, povzetek, porociloHtml, NASLOVI_KONTROL } from './jedro.mjs';
+import { najdba, odkrijNaslove, povzetek, porociloHtml, razkodiEntitete, NASLOVI_KONTROL } from './jedro.mjs';
 import { kontrola2, kontrola2Dnevnik, kontrola4, kontrola5, kontrola6 } from './kontrole-streznik.mjs';
 import { kontrola1, kontrola3 } from './kontrole-vsebina.mjs';
 
@@ -12,7 +12,7 @@ const beri = async (pot) => JSON.parse(await readFile(pot, 'utf8'));
 const podatki = await beri('/stanje/naslovi.json');
 const stanje = await beri('/stanje/stanje-produkcije.json');
 const { naslovi, najdbe } = odkrijNaslove(podatki);
-const kontekst = { naslovi, podatki, stanje, osnova: OSNOVA, mapaPorocila: '/porocilo' };
+const kontekst = { naslovi, podatki, stanje, osnova: OSNOVA, mapaPorocila: '/porocilo', opombe: [] };
 
 const kontrole = [[1, kontrola1], [2, kontrola2], [3, kontrola3], [4, kontrola4], [5, kontrola5], [6, kontrola6]];
 for (const [st, kontrola] of kontrole) {
@@ -28,8 +28,8 @@ try { dnevnik = await readFile('/stanje/debug.log', 'utf8'); } catch { /* ni dne
 najdbe.push(...await kontrola2Dnevnik({ ...kontekst, dnevnik }));
 
 const cas = new Date().toISOString().replace('T', ' ').slice(0, 16) + ' UTC';
-await writeFile('/porocilo/najdbe.json', `${JSON.stringify({ cas, arhiv: stanje.arhiv, najdbe }, null, 2)}\n`);
-await writeFile('/porocilo/porocilo.html', porociloHtml({ cas, arhiv: stanje.arhiv, najdbe }));
+await writeFile('/porocilo/najdbe.json', `${JSON.stringify({ cas, arhiv: stanje.arhiv, najdbe, opombe: kontekst.opombe }, null, 2)}\n`);
+await writeFile('/porocilo/porocilo.html', porociloHtml({ cas, arhiv: stanje.arhiv, najdbe, opombe: kontekst.opombe }));
 
 const p = povzetek(najdbe);
 console.log(`\nPreverjanje lokalne kopije (arhiv: ${stanje.arhiv})`);
@@ -40,8 +40,8 @@ for (const [k] of kontrole) {
   const st = (s) => v.filter((n) => n.stopnja === s).length;
   console.log(`  ${k}. ${naslov}: napake ${st('napaka')}, opozorila ${st('opozorilo')}, ročni koraki ${st('rocni-korak')}`);
 }
-for (const n of najdbe.filter((x) => x.stopnja === 'napaka')) console.log(`  NAPAKA [${n.kontrola}] ${n.sporocilo}`);
-const rocni = [...new Set(najdbe.filter((n) => n.stopnja === 'rocni-korak').map((n) => n.sporocilo))];
+for (const n of najdbe.filter((x) => x.stopnja === 'napaka')) console.log(`  NAPAKA [${n.kontrola}] ${razkodiEntitete(n.sporocilo)}`);
+const rocni = [...new Set(najdbe.filter((n) => n.stopnja === 'rocni-korak').map((n) => razkodiEntitete(n.sporocilo)))];
 if (rocni.length) {
   console.log('\nRočni koraki za produkcijo:');
   for (const s of rocni) console.log(`  - ${s}`);

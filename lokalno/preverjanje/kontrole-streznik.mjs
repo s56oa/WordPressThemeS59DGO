@@ -121,7 +121,7 @@ const XMLRPC = '<?xml version="1.0"?><methodCall><methodName>system.listMethods<
 
 // xmlrpc.php ne sprejema klicev: zavrnjen (≥ 400 ali <fault>) ali pa ponuja samo vgrajene
 // metode system.* (mu-plugin izprazni xmlrpc_methods; .htaccess s produkcije lokalno ne velja).
-// Vrne null, če je v redu, { opomba } če je v redu le na ravni mu-plugina, sicer opis kršitve.
+// Vrne null, če je v redu, { opomba } če je v redu le na ravni mu-plugina (ni najdba), sicer opis kršitve.
 const OPOMBA_XMLRPC = 'xmlrpc.php odgovori, ponudi pa samo vgrajene metode system.* (mu-plugin). '
   + 'Plast .htaccess s produkcije (403 za xmlrpc.php) lokalno ni preverjena.';
 function presodiXmlrpc({ koda, telo }) {
@@ -133,6 +133,7 @@ function presodiXmlrpc({ koda, telo }) {
 }
 
 // 6: utrjevanje (mu-plugin 00-s59dgo-hardening.php s produkcije) in PHP v uploads/.
+// Pojasnila brez stopnje doda v kontekst.opombe ({ kontrola: 6, besedilo }), če je podan.
 export async function kontrola6(kontekst) {
   const o = kontekst.osnova;
   const najdbe = [];
@@ -152,7 +153,7 @@ export async function kontrola6(kontekst) {
       const odziv = await zahteva(kontekst, url, moznosti);
       const krsitev = presodi(odziv);
       if (krsitev?.opomba) {
-        najdbe.push(najdba(6, 'opomba', `Izpolnjeno: ${opis} (koda ${odziv.koda}; samo raven mu-plugina)`, { url, koda: odziv.koda, opomba: krsitev.opomba }));
+        kontekst.opombe?.push({ kontrola: 6, besedilo: krsitev.opomba });
       } else if (krsitev !== null) {
         najdbe.push(najdba(6, 'napaka', `Ni izpolnjeno: ${opis} (koda ${odziv.koda}${krsitev ? `; ${krsitev}` : ''})`, { url, koda: odziv.koda }));
       }

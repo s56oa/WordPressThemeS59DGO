@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {
   najdba, odkrijNaslove, delezObreza, razvrstiSliko, jeIzrezKartice, preveriOg,
-  razvrstiZahtevo, razvrstiKonzolo, noveNajdbe, povzetek, porociloHtml,
+  razvrstiZahtevo, razvrstiKonzolo, noveNajdbe, povzetek, porociloHtml, razkodiEntitete,
 } from '../lokalno/preverjanje/jedro.mjs';
 import {
   razcleniMeta, razvrstiDnevnik, kontrola2, kontrola4, kontrola5, kontrola6,
@@ -230,18 +230,29 @@ ok(r.length === 6 && r.every((x) => x.stopnja === 'napaka' && x.kontrola === 6),
 // Brez .htaccess s produkcije ostanejo samo vgrajene metode system.* (mu-plugin izprazni xmlrpc_methods).
 const samoSystem = '<methodResponse><params><param><value><array><data><value><string>system.multicall</string></value><value><string>system.listMethods</string></value><value><string>system.getCapabilities</string></value></data></array></value></param></params></methodResponse>';
 r = await kontrola6({ osnova: O, stanje: { php_v_uploads: [] }, fetch: navidezen({ ...varno, 'POST /xmlrpc.php': odziv(200, samoSystem) }) });
-ok(stopnje(r, 'napaka').length === 0, 'kontrola6: xmlrpc s samimi metodami system.* ne sprejema klicev');
+ok(r.length === 0, 'kontrola6: xmlrpc s samimi metodami system.* ne sprejema klicev (brez najdb)');
 r = await kontrola6({ osnova: O, stanje: { php_v_uploads: [] }, fetch: navidezen({ ...varno, 'POST /xmlrpc.php': odziv(200, samoSystem.replace('system.multicall', 'pingback.ping')) }) });
 ok(r.length === 1 && r[0].sporocilo.includes('pingback.ping'), 'kontrola6: xmlrpc z metodo pingback.ping = napaka z imenom metode');
 let xmlrpcTelo = '';
 await kontrola6({ osnova: O, stanje: { php_v_uploads: [] }, fetch: navidezen({ ...varno, 'POST /xmlrpc.php': (o) => { xmlrpcTelo = o.body; return odziv(403); } }) });
 ok(xmlrpcTelo.includes('<methodName>system.listMethods</methodName>'), 'kontrola6: klic system.listMethods');
-// Opomba ob xmlrpc s samimi metodami system.*: ni napake, opozorila ali ročnega koraka.
-r = await kontrola6({ osnova: O, stanje: { php_v_uploads: [] }, fetch: navidezen({ ...varno, 'POST /xmlrpc.php': odziv(200, samoSystem) }) });
-ok(povzetek(r).napake + povzetek(r).opozorila + povzetek(r).rocni === 0, 'kontrola6: system.* brez najdb, ki štejejo');
-ok(r.length === 1 && r[0].stopnja === 'opomba' && r[0].podrobnosti.opomba.includes('.htaccess'), 'kontrola6: system.* doda opombo o .htaccess');
-h = porociloHtml({ ...osnova, najdbe: r });
-ok(h.includes('Opomba') && h.includes('.htaccess'), 'porocilo: opomba izpisana');
+// Opomba ob xmlrpc s samimi metodami system.*: ni najdba, ampak opomba v kontekst.opombe.
+const opombe6 = [];
+r = await kontrola6({ osnova: O, stanje: { php_v_uploads: [] }, opombe: opombe6, fetch: navidezen({ ...varno, 'POST /xmlrpc.php': odziv(200, samoSystem) }) });
+ok(r.length === 0 && !r.some((x) => x.stopnja === 'opomba'), 'kontrola6: system.* brez najdb (ni stopnje opomba)');
+ok(opombe6.length === 1 && opombe6[0].kontrola === 6 && opombe6[0].besedilo.includes('.htaccess'), 'kontrola6: system.* doda opombo o .htaccess v opombe');
+const opombe6b = [];
+await kontrola6({ osnova: O, stanje: { php_v_uploads: [] }, opombe: opombe6b, fetch: navidezen(varno) });
+ok(opombe6b.length === 0, 'kontrola6: xmlrpc 403 brez opombe');
+h = porociloHtml({ ...osnova, najdbe: r, opombe: [...opombe6, { kontrola: 6, besedilo: '<b>x</b>' }] });
+const razdelek6 = h.slice(h.indexOf('<h2>6. Utrjevanje</h2>'), h.indexOf('</section>', h.indexOf('<h2>6. Utrjevanje</h2>')));
+ok(razdelek6.includes('Brez najdb.') && razdelek6.includes('.htaccess'), 'porocilo: razdelek 6 = Brez najdb. in opomba');
+ok(!h.includes('<b>x</b>') && h.includes('&lt;b&gt;x&lt;/b&gt;'), 'porocilo: opomba ubezana');
+ok(!h.slice(h.indexOf('<h2>5.'), h.indexOf('<h2>6.')).includes('.htaccess'), 'porocilo: opomba samo pod svojo kontrolo');
+ok(povzetek(r).izhod === 0, 'povzetek: opombe ne štejejo');
+
+// razkodiEntitete
+ok(razkodiEntitete('Marko Kranjc &#8211; S5xABC &amp; klub') === 'Marko Kranjc – S5xABC & klub', 'razkodiEntitete');
 
 // kontrole-vsebina.mjs
 let piskotek = 'ni klica';
