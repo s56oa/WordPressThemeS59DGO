@@ -143,5 +143,18 @@ const vPl = J.primer(P, plakat, 'en'); vPl.polja.opis = 'Prva vrstica\nDruga vrs
 r = J.sestavi(P, 'plakat', vPl, nast('en', 'midjourney'));
 ok(!r.pozitivni.includes('\n') && r.pozitivni.includes('"Prva vrstica Druga vrstica"'), 'Midjourney: prelomi vrstic v vnosu postanejo presledki');
 
+// 7. Naslovna slika: kartica 20:13 (privzeto) in 16:9 z varnim območjem.
+const vNs = J.primer(P, naslovna, 'en');
+r = J.sestavi(P, 'naslovna', vNs, nast('en', 'midjourney'));
+ok(r.pozitivni.endsWith('--ar 3:2 --style raw --stylize 50') && r.pozitivni.includes('1600×1040'), 'naslovna privzeto: kartica 20:13 (3:2, obrez 1600×1040)');
+vNs.elementi.format = '16:9';
+r = J.sestavi(P, 'naslovna', vNs, nast('en', 'midjourney'));
+ok(r.pozitivni.endsWith('--ar 16:9 --style raw --stylize 50') && r.pozitivni.includes('central 85 %'), 'naslovna 16:9: --ar 16:9 in varno območje');
+ok(J.sestavi(P, 'naslovna', vNs, nast('sl', 'univerzalno')).pozitivni.includes('srednjih 85 %'), 'naslovna 16:9 SL: varno območje');
+const f169 = J.poId(naslovna.formati, '16:9');
+ok(f169 && f169.varno && f169.varno.length === 2 && f169.varno[0].w < 8, 'naslovna 16:9: predogled označi oba stranska pasova');
+const plakatSl = J.sestavi(P, 'plakat', J.primer(P, J.predloga(P, 'plakat'), 'sl'), nast('sl', 'univerzalno')).pozitivni;
+ok(plakatSl.includes('www.s59dgo.si') && !plakatSl.includes('s59dgo.org'), 'plakat: domena www.s59dgo.si');
+
 // TESTI-NAPREJ (naslednje naloge dodajo teste nad to vrstico)
 console.log('OK: prompti.test.mjs, ' + stevilo + ' preverjanj');

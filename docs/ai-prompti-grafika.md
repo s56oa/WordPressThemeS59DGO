@@ -1,8 +1,8 @@
-# AI prompti za grafiko spletne strani s59dgo.org
+# AI prompti za grafiko spletne strani s59dgo.si
 
 Predloge promptov za izdelavo naslovnih slik, infografik, objav za družbena omrežja, plakatov, ikon in dekorativnih elementov, ki so vizualno skladni z WordPress temo `s59dgo` (smer »Grebeni«).
 
-Datum: 2026-09-12 · Velja za temo s59dgo 1.1.0 · Vir barv in pisav: `s59dgo/style.css`, `s59dgo/theme.json`, `s59dgo/assets/img/greben.svg`.
+Datum: 2026-09-12, posodobljeno 2026-10-17 · Velja za temo s59dgo 1.2.0 · Vir barv in pisav: `s59dgo/style.css`, `s59dgo/theme.json`, `s59dgo/assets/img/greben.svg`.
 
 ## Kako uporabljati
 
@@ -104,9 +104,19 @@ The image must work on both a light background #eef3f8 and a dark background #0f
 
 ## 3. Naslovne slike objav
 
-**Namen**: naslovna slika (»Featured image«) objave. Tema jo izreže na 800×520 px za kartico v mreži in prikaže v širini 1100 px nad besedilom objave.
+**Namen**: naslovna slika (»Featured image«) objave. Tema jo prikaže na dva načina:
 
-**Mere**: generiraj v razmerju **3:2** (npr. 1536×1024 ali 1600×1067), nato izreži na 1600×1040 (razmerje 20:13). Glavni motiv naj bo v sredini, ker WordPress reže z obeh strani. **Brez besedila** – naslov in kategorija se izpišeta v temi.
+| Kje | Prikaz | Razmerje |
+|---|---|---|
+| Kartice na uvodni strani, v arhivih in iskanju | izrez 800×520 px, obrezan na sredini (WordPress ob nalaganju, CSS `object-fit: cover`) | vedno **20:13** (≈1,54:1) |
+| Posamezna objava | cela slika brez obreza, velikost `large`, do 1100 px široko | izvirno razmerje |
+| Deljenje na Facebooku (`og:image`, tema 1.2.0) | izrez 1200×630, obrezan na sredini | 1,91:1 |
+
+**Mere**: privzeto generiraj v razmerju **3:2** (npr. 1536×1024 ali 1600×1067), nato izreži na **1600×1040** (20:13), da se kartica in objava ujemata. Izvirnik naj bo vsaj 1600×1040: iz manjše slike WordPress izreza 800×520 ne naredi in sliko obreže šele brskalnik. Glavni motiv naj bo v sredini, ker se reže z obeh strani, za deljenje na Facebooku pa tudi zgoraj in spodaj (≈10 % na vsaki strani). **Brez besedila** – naslov in kategorija se izpišeta v temi.
+
+**16:9**: če slika mora biti široka (npr. ista slika gre tudi na YouTube ali v predstavitev), generiraj 16:9 in drži glavni motiv v **srednjih 85 % širine** – kartica odreže ≈7 % na vsaki strani. Prompt dopolni s stavkom: `keep the main subject and all important shapes within the central 85 % of the width` / `glavni motiv in vse pomembne oblike drži v srednjih 85 % širine`.
+
+**Ne kot naslovna slika**: infografik, posnetkov zaslona aplikacij in slik z besedilom ne nastavljaj kot naslovno sliko – kartica jih obreže (npr. 2,5:1 izgubi tretjino širine). Vstavi jih v vsebino objave, za naslovno sliko pa naredi ločeno ilustracijo 20:13.
 
 **Ozadje**: privzeto temno modra `#15304f` (kot nadomestna slika `greben.svg`). Za pestrost lahko vsaka tretja objava uporabi svetlo različico (nebo `#eef3f8`, greben v modrih).
 
@@ -287,13 +297,13 @@ Objava za družbena omrežja ob rezultatu: "{NASLOV, npr. 1. mesto v kategoriji 
 EN:
 ```
 [SLOG] [TIPO]
-Printable poster, portrait A4 aspect ratio (1:1.414), 300 dpi, for print. Layout in three bands. Top band (55 % of height): navy #15304f with a large headline "{NASLOV}" in white bold geometric sans-serif, an uppercase ice-blue label "{ZNAČKA}" above it, and layered angular ridge silhouettes of Snežnik in #1f4470 and #2a5687 at the bottom of the band with {motiv} on the peak and a small orange sun; the band ends with the angular ridge edge cutting into the light area below (no straight line). Middle band: off-white #eef3f8 with three columns of details, each with a single-color icon in #2a5687 and uppercase label in muted blue #5f7590: "KDAJ" "{DATUM IN URA}", "KJE" "{KRAJ}", "KDO" "{ORGANIZATOR}"; below them two lines of description "{OPIS}" in dark navy #172433. Bottom band (12 %): white #ffffff with the callsign "S59DGO", the website "www.s59dgo.org" and a small orange #d9702a rounded button shape with white text "{POZIV, npr. Vabljeni!}". Leave 10 mm safe margins. Vector-clean, print-ready, CMYK-safe colors. [NE]
+Printable poster, portrait A4 aspect ratio (1:1.414), 300 dpi, for print. Layout in three bands. Top band (55 % of height): navy #15304f with a large headline "{NASLOV}" in white bold geometric sans-serif, an uppercase ice-blue label "{ZNAČKA}" above it, and layered angular ridge silhouettes of Snežnik in #1f4470 and #2a5687 at the bottom of the band with {motiv} on the peak and a small orange sun; the band ends with the angular ridge edge cutting into the light area below (no straight line). Middle band: off-white #eef3f8 with three columns of details, each with a single-color icon in #2a5687 and uppercase label in muted blue #5f7590: "KDAJ" "{DATUM IN URA}", "KJE" "{KRAJ}", "KDO" "{ORGANIZATOR}"; below them two lines of description "{OPIS}" in dark navy #172433. Bottom band (12 %): white #ffffff with the callsign "S59DGO", the website "www.s59dgo.si" and a small orange #d9702a rounded button shape with white text "{POZIV, npr. Vabljeni!}". Leave 10 mm safe margins. Vector-clean, print-ready, CMYK-safe colors. [NE]
 ```
 
 SL:
 ```
 [SLOG] [TIPO]
-Plakat za tisk, pokončno razmerje A4 (1:1,414), 300 dpi. Postavitev v treh pasovih. Zgornji pas (55 % višine): temno modra #15304f z velikim naslovom "{NASLOV}" v beli krepki geometrijski pisavi brez serifov, nad njim ledeno modra oznaka v verzalkah "{ZNAČKA}", ob dnu pasu plasti kotnih silhuet grebena Snežnika v #1f4470 in #2a5687 z {motiv} na vrhu in majhnim oranžnim soncem; pas se konča s kotnim robom grebena, ki reže v svetlo območje spodaj (brez ravne črte). Srednji pas: umazano bela #eef3f8 s tremi stolpci podrobnosti, vsak z enobarvno ikono v #2a5687 in oznako v verzalkah v tihi modri #5f7590: "KDAJ" "{DATUM IN URA}", "KJE" "{KRAJ}", "KDO" "{ORGANIZATOR}"; pod njimi dve vrstici opisa "{OPIS}" v temno modri #172433. Spodnji pas (12 %): bela #ffffff s klicnim znakom "S59DGO", spletnim naslovom "www.s59dgo.org" in majhnim oranžnim #d9702a zaobljenim gumbom z belim besedilom "{POZIV, npr. Vabljeni!}". Pusti 10 mm varnega roba. Vektorsko čisto, pripravljeno za tisk, barve varne za CMYK. [NE]
+Plakat za tisk, pokončno razmerje A4 (1:1,414), 300 dpi. Postavitev v treh pasovih. Zgornji pas (55 % višine): temno modra #15304f z velikim naslovom "{NASLOV}" v beli krepki geometrijski pisavi brez serifov, nad njim ledeno modra oznaka v verzalkah "{ZNAČKA}", ob dnu pasu plasti kotnih silhuet grebena Snežnika v #1f4470 in #2a5687 z {motiv} na vrhu in majhnim oranžnim soncem; pas se konča s kotnim robom grebena, ki reže v svetlo območje spodaj (brez ravne črte). Srednji pas: umazano bela #eef3f8 s tremi stolpci podrobnosti, vsak z enobarvno ikono v #2a5687 in oznako v verzalkah v tihi modri #5f7590: "KDAJ" "{DATUM IN URA}", "KJE" "{KRAJ}", "KDO" "{ORGANIZATOR}"; pod njimi dve vrstici opisa "{OPIS}" v temno modri #172433. Spodnji pas (12 %): bela #ffffff s klicnim znakom "S59DGO", spletnim naslovom "www.s59dgo.si" in majhnim oranžnim #d9702a zaobljenim gumbom z belim besedilom "{POZIV, npr. Vabljeni!}". Pusti 10 mm varnega roba. Vektorsko čisto, pripravljeno za tisk, barve varne za CMYK. [NE]
 ```
 
 Za A3 uporabi isto predlogo; generator ne pozna dpi, zato generiraj v največji možni ločljivosti in povečaj z vektorskim prerisom (Inkscape »Trace bitmap«) ali z AI povečavo.
@@ -415,7 +425,8 @@ Set {N} majhnih ploskovnih dekorativnih elementov v vizualni podobi alpskega rad
 - [ ] **Slog**: brez gradientov, senc in obrob; največ eno sonce; oranžne največ 10 %.
 - [ ] **Barve**: modra res `#15304f`/`#2a5687` (po potrebi uskladi v urejevalniku), ne vijolična ali turkizna.
 - [ ] **Besedilo**: pravilno slovensko s šumniki, brez naključnih črk; kontrast besedila proti podlagi ≥ 4,5:1 (oranžno besedilo samo `#b0561a` na svetli ali `#f0955a` na temni).
-- [ ] **Mere**: naslovna slika ≥ 1600×1040 (motiv na sredini), infografika 2200 ali 1520 px široka, omrežja 1080 px, plakat 300 dpi.
+- [ ] **Mere**: naslovna slika ≥ 1600×1040 v razmerju 20:13 (motiv na sredini; pri 16:9 v srednjih 85 % širine), infografika 2200 ali 1520 px široka, omrežja 1080 px, plakat 300 dpi.
+- [ ] **Naslovna slika ni infografika**: brez besedila in posnetkov zaslona; preveri izrez kartice na uvodni strani.
 - [ ] **Temni način**: prosojne slike preveri na `#0f1c2b`; ikone uporabljajo `currentColor`.
 - [ ] **Datoteka**: WebP ali JPEG kakovosti 80, naslovna < 300 KB, infografika < 600 KB; ime datoteke z ASCII in pomišljaji (`marconi-2026-rezultati.webp`).
 - [ ] **WordPress**: nastavi kot »Naslovna slika« objave; alt besedilo v slovenščini (npr. »Ilustracija: stolp z antenami nad grebenom Snežnika«); infografiko vstavi kot blok Slika s poravnavo Široko in besedilnim povzetkom podatkov pod njo (dostopnost).

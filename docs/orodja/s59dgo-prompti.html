@@ -109,7 +109,7 @@ legend{padding:0;margin-bottom:6px}
   <div class="ovoj">
     <div class="trak__oznaka">Radio klub Snežnik · S59DGO</div>
     <h1>Generator promptov za grafiko</h1>
-    <p>Izberi vrsto grafike, vpiši besedilo in izberi elemente. Orodje sestavi prompt v slogu spletne strani s59dgo.org.</p>
+    <p>Izberi vrsto grafike, vpiši besedilo in izberi elemente. Orodje sestavi prompt v slogu spletne strani s59dgo.si.</p>
   </div>
   <span class="trak__sonce" aria-hidden="true"></span>
   <svg class="trak__greben" viewBox="0 0 1200 60" preserveAspectRatio="none" aria-hidden="true"><path d="M0 60 L0 40 L100 32 L190 39 L280 21 L350 29 L440 15 L510 27 L590 7 L670 23 L740 15 L830 31 L910 19 L990 32 L1080 24 L1160 35 L1200 28 L1200 60 Z" fill="currentColor"/></svg>
@@ -397,7 +397,7 @@ legend{padding:0;margin-bottom:6px}
             "razdelek": "3.1",
             "skupina": "Naslovne slike",
             "ime": "Naslovna slika objave",
-            "opis": "Generiraj 3:2, nato obreži na 1600×1040. Motiv na sredini, ker WordPress reže z obeh strani. Brez besedila – naslov izpiše tema.",
+            "opis": "Kartica 20:13: generiraj 3:2 in obreži na 1600×1040 – kartice na uvodni strani so 20:13, objava pokaže celo sliko. 16:9: motiv drži v srednjih 85 %, ker kartica odreže ≈7 % na vsaki strani. Brez besedila – naslov izpiše tema.",
             "slog": true,
             "tipo": false,
             "sonce": true,
@@ -420,13 +420,36 @@ legend{padding:0;margin-bottom:6px}
             ],
             "formati": [
                 {
-                    "id": "3:2",
-                    "ime": "3:2",
+                    "id": "kartica",
+                    "ime": "Kartica 20:13",
                     "ar": "3:2",
-                    "w": 3,
-                    "h": 2,
-                    "en": "Landscape 3:2 aspect ratio",
-                    "sl": "Ležeče razmerje 3:2"
+                    "w": 20,
+                    "h": 13,
+                    "en": "Landscape 3:2 aspect ratio, to be cropped to 1600×1040 (20:13) for the post cards on the club website",
+                    "sl": "Ležeče razmerje 3:2, ki se obreže na 1600×1040 (20:13) za kartice objav na spletni strani kluba"
+                },
+                {
+                    "id": "16:9",
+                    "ime": "16:9 (široka)",
+                    "ar": "16:9",
+                    "w": 16,
+                    "h": 9,
+                    "en": "Landscape 16:9 aspect ratio; keep the main subject and all important shapes within the central 85 % of the width, because the club website crops about 7 % from each side on the post cards",
+                    "sl": "Ležeče razmerje 16:9; glavni motiv in vse pomembne oblike drži v srednjih 85 % širine, ker spletna stran kluba na karticah objav odreže približno 7 % na vsaki strani",
+                    "varno": [
+                        {
+                            "x": 0,
+                            "y": 0,
+                            "w": 6.7,
+                            "h": 100
+                        },
+                        {
+                            "x": 93.3,
+                            "y": 0,
+                            "w": 6.7,
+                            "h": 100
+                        }
+                    ]
                 }
             ],
             "polja": [
@@ -1989,8 +2012,8 @@ legend{padding:0;margin-bottom:6px}
                 }
             ],
             "besedilo": {
-                "en": "{{format}}. Layout in three bands. Top band (55 % of height): navy #15304f with a large headline \"{{naslov}}\" in white bold geometric sans-serif, an uppercase ice-blue label \"{{znacka}}\" above it, and {{greben}} at the bottom of the band with {{vrh}} on the peak and {{sonce}}; the band ends with the angular ridge edge cutting into the light area below (no straight line). Middle band: off-white #eef3f8 with three columns of details, each with a single-color icon in #2a5687 and an uppercase label in muted blue #5f7590: \"KDAJ\" \"{{datum}}\", \"KJE\" \"{{kraj}}\", \"KDO\" \"{{organizator}}\"; below them two lines of description \"{{opis}}\" in dark navy #172433. Bottom band (12 %): white #ffffff with the callsign \"S59DGO\", the website \"www.s59dgo.org\" and {{p:gumb}} \"{{poziv}}\". Leave 10 mm safe margins. Vector-clean, print-ready, CMYK-safe colors.",
-                "sl": "{{format}}. Postavitev v treh pasovih. Zgornji pas (55 % višine): temno modra #15304f z velikim naslovom \"{{naslov}}\" v beli krepki geometrijski pisavi brez serifov, nad njim ledeno modra oznaka v verzalkah \"{{znacka}}\", ob dnu pasu {{greben}} z {{vrh}} na vrhu in {{sonce}}; pas se konča s kotnim robom grebena, ki reže v svetlo območje spodaj (brez ravne črte). Srednji pas: umazano bela #eef3f8 s tremi stolpci podrobnosti, vsak z enobarvno ikono v #2a5687 in oznako v verzalkah v tihi modri #5f7590: \"KDAJ\" \"{{datum}}\", \"KJE\" \"{{kraj}}\", \"KDO\" \"{{organizator}}\"; pod njimi dve vrstici opisa \"{{opis}}\" v temno modri #172433. Spodnji pas (12 %): bela #ffffff s klicnim znakom \"S59DGO\", spletnim naslovom \"www.s59dgo.org\" in {{p:gumb}} \"{{poziv}}\". Pusti 10 mm varnega roba. Vektorsko čisto, pripravljeno za tisk, barve varne za CMYK."
+                "en": "{{format}}. Layout in three bands. Top band (55 % of height): navy #15304f with a large headline \"{{naslov}}\" in white bold geometric sans-serif, an uppercase ice-blue label \"{{znacka}}\" above it, and {{greben}} at the bottom of the band with {{vrh}} on the peak and {{sonce}}; the band ends with the angular ridge edge cutting into the light area below (no straight line). Middle band: off-white #eef3f8 with three columns of details, each with a single-color icon in #2a5687 and an uppercase label in muted blue #5f7590: \"KDAJ\" \"{{datum}}\", \"KJE\" \"{{kraj}}\", \"KDO\" \"{{organizator}}\"; below them two lines of description \"{{opis}}\" in dark navy #172433. Bottom band (12 %): white #ffffff with the callsign \"S59DGO\", the website \"www.s59dgo.si\" and {{p:gumb}} \"{{poziv}}\". Leave 10 mm safe margins. Vector-clean, print-ready, CMYK-safe colors.",
+                "sl": "{{format}}. Postavitev v treh pasovih. Zgornji pas (55 % višine): temno modra #15304f z velikim naslovom \"{{naslov}}\" v beli krepki geometrijski pisavi brez serifov, nad njim ledeno modra oznaka v verzalkah \"{{znacka}}\", ob dnu pasu {{greben}} z {{vrh}} na vrhu in {{sonce}}; pas se konča s kotnim robom grebena, ki reže v svetlo območje spodaj (brez ravne črte). Srednji pas: umazano bela #eef3f8 s tremi stolpci podrobnosti, vsak z enobarvno ikono v #2a5687 in oznako v verzalkah v tihi modri #5f7590: \"KDAJ\" \"{{datum}}\", \"KJE\" \"{{kraj}}\", \"KDO\" \"{{organizator}}\"; pod njimi dve vrstici opisa \"{{opis}}\" v temno modri #172433. Spodnji pas (12 %): bela #ffffff s klicnim znakom \"S59DGO\", spletnim naslovom \"www.s59dgo.si\" in {{p:gumb}} \"{{poziv}}\". Pusti 10 mm varnega roba. Vektorsko čisto, pripravljeno za tisk, barve varne za CMYK."
             },
             "shema": {
                 "ozadje": "#ffffff",
@@ -2122,7 +2145,7 @@ legend{padding:0;margin-bottom:6px}
                     },
                     {
                         "t": "staticno",
-                        "besedilo": "S59DGO · www.s59dgo.org",
+                        "besedilo": "S59DGO · www.s59dgo.si",
                         "x": 8,
                         "y": 95,
                         "v": 1.8,
