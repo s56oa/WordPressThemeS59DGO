@@ -2705,7 +2705,233 @@ legend{padding:0;margin-bottom:6px}
 <script id="jedro">
 (function (koren) {
   'use strict';
-  koren.S59DGO_JEDRO = {};
+  const PRAZNO = { en: 'an empty solid text bar', sl: 'prazen enobarven besedilni trak' };
+  const PRAZNO_STAVEK = { en: 'Leave every empty text bar as a plain solid bar without letters.', sl: 'Vsak prazen besedilni trak pusti kot enobarven trak brez črk.' };
+  const BREZ_DODATNO = { en: 'no additional elements', sl: 'brez dodatnih elementov' };
+  const MJ_NO = ['gradient', 'shadow', 'glow', 'neon', 'photo', 'text', 'letters', 'watermark', 'face', 'frame'];
+
+  const lastno = (o, k) => o != null && typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k);
+
+  function poId(seznam, id) {
+    return (seznam || []).find(x => x.id === id) || null;
+  }
+  function predloga(P, id) {
+    return poId(P.predloge, id) || P.predloge[0];
+  }
+  function moznosti(P, polje) {
+    return typeof polje.moznosti === 'string' ? P[polje.moznosti] : polje.moznosti;
+  }
+  function vJeziku(v, jezik) {
+    return v && typeof v === 'object' ? (v[jezik] || '') : (v || '');
+  }
+  function citati(s) {
+    return String(s).replace(/"([^"]*)"/g, '»$1«').replace(/"/g, '»');
+  }
+  function praznaVrstica(f) {
+    const r = {};
+    f.stolpci.forEach(s => { r[s.id] = ''; });
+    return r;
+  }
+
+  function privzeto(P, p) {
+    const polja = {};
+    (p.polja || []).forEach(f => {
+      if (f.vrsta === 'vrstice') polja[f.id] = Array.from({ length: f.min }, () => praznaVrstica(f));
+      else if (f.vrsta === 'poudarek') polja[f.id] = 0;
+      else if (f.vrsta === 'izbira') polja[f.id] = { izbrana: moznosti(P, f)[0].id, svoj: '' };
+      else if (f.vrsta === 'seznam') polja[f.id] = { izbrane: (f.privzete || []).slice(), svoj: '' };
+      else if (f.vrsta === 'motiv') polja[f.id] = { izbran: P.motivi[0].id, svoj: '', dodatno: 'privzeto', dodatnoSvoj: '' };
+      else polja[f.id] = '';
+    });
+    return {
+      polja,
+      elementi: {
+        ozadje: p.ozadja ? p.ozadja[0].id : '',
+        sonce: p.sonce ? 'desno' : '',
+        plasti: p.greben ? 2 : 0,
+        format: p.formati[0].id,
+        poudarki: (p.poudarki || []).filter(x => x.privzeto).map(x => x.id)
+      }
+    };
+  }
+
+  function primer(P, p, jezik) {
+    const v = privzeto(P, p), pr = p.primer || {};
+    (p.polja || []).forEach(f => {
+      if (!lastno(pr, f.id)) return;
+      const x = pr[f.id];
+      if (f.vrsta === 'vrstice') v.polja[f.id] = x.map(r => { const o = {}; f.stolpci.forEach((s, i) => { o[s.id] = r[i] || ''; }); return o; });
+      else if (f.vrsta === 'poudarek') v.polja[f.id] = x;
+      else if (f.vrsta === 'izbira') v.polja[f.id] = { izbrana: x, svoj: '' };
+      else if (f.vrsta === 'seznam') v.polja[f.id] = { izbrane: x.slice(), svoj: '' };
+      else if (f.vrsta === 'motiv') v.polja[f.id] = { izbran: x, svoj: '', dodatno: 'privzeto', dodatnoSvoj: '' };
+      else v.polja[f.id] = vJeziku(x, jezik);
+    });
+    return v;
+  }
+
+  // Varni elementi: neznane vrednosti nadomesti s privzetimi.
+  function elementi(P, p, e) {
+    const oz = p.ozadja ? (poId(p.ozadja, e.ozadje) || p.ozadja[0]) : null;
+    return {
+      ozadje: oz,
+      sonce: lastno(P.elementi.sonce, e.sonce) ? e.sonce : 'desno',
+      plasti: e.plasti === 3 ? 3 : 2,
+      format: poId(p.formati, e.format) || p.formati[0],
+      poudarki: Array.isArray(e.poudarki) ? e.poudarki : []
+    };
+  }
+
+  function vrstica(f, r, i, jezik) {
+    let s = f.vrstica[jezik].split('{{#}}').join(String(i + 1));
+    f.stolpci.forEach(st => { s = s.split('{{' + st.id + '}}').join(citati(String(r[st.id] || '').trim())); });
+    return s
+      .replace(/""/g, '')
+      .replace(/\(\s*(icon:|ikona:)?\s*\)/g, '')
+      .replace(/\s+[–:]\s*$/, '')
+      .replace(/^\s*[–:]\s*/, '')
+      .replace(/\s+[–:](\s+[–:])+/g, ' –')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+  }
+  const polna = (f, r) => r && f.stolpci.some(s => String(r[s.id] || '').trim());
+
+  function reze(P, p, v, jezik) {
+    const m = {}, prazna = [], opozorila = [], e = elementi(P, p, v.elementi || {});
+    m.format = e.format[jezik];
+    if (p.sonce) m.sonce = P.elementi.sonce[e.sonce][jezik];
+    if (e.ozadje) m.ozadje = e.ozadje[jezik];
+    if (p.greben) m.greben = P.elementi.greben[e.plasti + '-' + (e.ozadje && e.ozadje.id === 'svetlo' ? 'svetlo' : 'temno')][jezik];
+    (p.poudarki || []).forEach(x => { m['p:' + x.id] = x[e.poudarki.includes(x.id) ? 'da' : 'ne'][jezik]; });
+    (p.polja || []).forEach(f => {
+      const x = v.polja[f.id];
+      if (f.vrsta === 'vrstice') {
+        const vrstice = (x || []).filter(r => polna(f, r)).map((r, i) => vrstica(f, r, i, jezik));
+        m.N = String(vrstice.length);
+        if (vrstice.length) m[f.id] = vrstice.join('; ');
+        else { m[f.id] = null; prazna.push(f.oznaka); }
+      } else if (f.vrsta === 'poudarek') {
+        const vir = (v.polja[f.vir] || []).filter(r => r && polna(poId(p.polja, f.vir), r));
+        const r = vir[x] || vir[0];
+        const t = r ? citati(String(r[f.stolpec] || '').trim()) : '';
+        m[f.id] = t || null;
+      } else if (f.vrsta === 'izbira') {
+        const vse = moznosti(P, f), o = poId(vse, x.izbrana);
+        const svoj = f.svoj && x.izbrana === 'svoj' ? citati(String(x.svoj || '').trim()) : '';
+        if (f.svoj && x.izbrana === 'svoj' && !svoj) opozorila.push('Pri polju »' + f.oznaka + '« vpiši svoj opis ali izberi možnost.');
+        m[f.id] = o ? o[jezik] : (svoj || vse[0][jezik]);
+      } else if (f.vrsta === 'seznam') {
+        const vse = moznosti(P, f);
+        const izbrani = vse.filter(o => x.izbrane.includes(o.id)).map(o => o[jezik])
+          .concat(String(x.svoj || '').split(';').map(s => citati(s.trim())).filter(Boolean));
+        if (!izbrani.length) { opozorila.push('Seznam »' + f.oznaka + '« je prazen; uporabljen je prvi element.'); izbrani.push(vse[0][jezik]); }
+        const st = Math.ceil(Math.sqrt(izbrani.length));
+        m[f.id] = izbrani.join('; ');
+        m[f.id + '_N'] = String(izbrani.length);
+        m[f.id + '_mreza'] = st + '×' + Math.ceil(izbrani.length / st);
+      } else if (f.vrsta === 'motiv') {
+        const mo = poId(P.motivi, x.izbran), svoj = citati(String(x.svoj || '').trim());
+        if (!mo && !svoj) opozorila.push('Vpiši svoj motiv ali izberi enega s seznama.');
+        const izbrani = mo || P.motivi[0];
+        m.motiv = mo ? mo.motiv[jezik] : (svoj || izbrani.motiv[jezik]);
+        const dSvoj = citati(String(x.dodatnoSvoj || '').trim());
+        m.dodatno = x.dodatno === 'brez' ? BREZ_DODATNO[jezik]
+          : x.dodatno === 'svoj' ? (dSvoj || BREZ_DODATNO[jezik])
+          : (mo ? mo.dodatno[jezik] : BREZ_DODATNO[jezik]);
+      } else {
+        const t = citati(String(x || '').trim());
+        if (!t) {
+          if (f.vSliki) { m[f.id] = null; prazna.push(f.oznaka); }
+          else m[f.id] = vJeziku(f.privzeto, jezik);
+        } else {
+          m[f.id] = t;
+          if (f.vrstic && f.znakov && Math.ceil(t.length / f.znakov) > f.vrstic) {
+            opozorila.push('»' + f.oznaka + '« je predolg: pri ' + t.length + ' znakih bo verjetno več kot ' + f.vrstic + (f.vrstic === 1 ? ' vrstica.' : ' vrstice.'));
+          }
+        }
+      }
+    });
+    return { mapa: m, prazna, opozorila, e };
+  }
+
+  function uporabi(t, m, jezik) {
+    Object.keys(m).forEach(k => {
+      if (m[k] === null) t = t.split('"{{' + k + '}}"').join(PRAZNO[jezik]).split('{{' + k + '}}').join(PRAZNO[jezik]);
+    });
+    return t.replace(/\{\{([^}]+)\}\}/g, (cel, k) => (lastno(m, k) && m[k] !== null ? m[k] : cel));
+  }
+  function pocisti(t) {
+    return t.replace(/ +([.,;])/g, '$1').replace(/ {2,}/g, ' ').trim();
+  }
+
+  function sestavi(P, idPredloge, v, n) {
+    const p = predloga(P, idPredloge), j = n.jezik === 'sl' ? 'sl' : 'en', B = P.bloki;
+    const idOrodja = lastno(P.orodja, n.orodje) ? n.orodje : 'univerzalno', o = P.orodja[idOrodja];
+    const r = reze(P, p, v, j);
+    const deli = [];
+    if (idOrodja === 'sd') deli.push(o.predpona);
+    if (p.slog) deli.push(B.slog[j]);
+    if (r.e.ozadje && r.e.ozadje.blok) deli.push(B[r.e.ozadje.blok][j]);
+    if (p.tipo && n.tipo) deli.push(B.tipo[j]);
+    deli.push(pocisti(uporabi(p.besedilo[j], r.mapa, j)));
+    if (Object.values(r.mapa).some(x => x === null)) deli.push(PRAZNO_STAVEK[j]);
+    let negativni = null;
+    if (idOrodja === 'sd') {
+      const seznam = o.negativ.filter(x => !(p.tipo && x === 'text')).join(', ');
+      negativni = n.ne ? B.ne[j] + ' ' + seznam : seznam;
+    } else if (idOrodja !== 'midjourney' && n.ne) {
+      deli.push(B.ne[j]);
+    }
+    if (o.zakljucek) deli.push(o.zakljucek[j]);
+    let pozitivni;
+    if (idOrodja === 'midjourney') {
+      pozitivni = deli.join(' ');
+      if (n.ne) pozitivni += ' --no ' + MJ_NO.filter(x => !(p.tipo && (x === 'text' || x === 'letters'))).join(', ');
+      pozitivni += ' --ar ' + r.e.format.ar + ' --style raw --stylize 50';
+    } else {
+      pozitivni = deli.join('\n');
+    }
+    const opozorila = r.opozorila.slice();
+    if (o.besedilo === false && p.tipo) opozorila.unshift(o.ime + ' besedila ne izpiše zanesljivo; besedilo dodaj naknadno v Canvi ali Inkscapu.');
+    r.prazna.forEach(x => opozorila.push('Polje »' + x + '« je prazno – v sliki bo prazen trak.'));
+    if (r.e.poudarki.filter(x => poId(p.poudarki, x)).length > 1) opozorila.push('Izbranih je več oranžnih poudarkov; pravilo teme je oranžna največ 10 % slike.');
+    return { pozitivni, negativni, opozorila };
+  }
+
+  function zacetno(P) {
+    return { verzija: 1, predloga: P.predloge[0].id, jezik: 'en', orodje: 'univerzalno', tipo: true, ne: true, vrednosti: {} };
+  }
+
+  // Obdrži obliko privzete vrednosti; tuje ključe in napačne tipe zavrže.
+  function ocisti(priv, u) {
+    if (Array.isArray(priv)) {
+      if (!Array.isArray(u)) return priv;
+      const vz = priv[0];
+      if (vz === undefined || typeof vz === 'string') return u.filter(x => typeof x === 'string');
+      return u.filter(x => x && typeof x === 'object' && !Array.isArray(x)).map(x => ocisti(vz, x));
+    }
+    if (priv && typeof priv === 'object') {
+      const o = {};
+      Object.keys(priv).forEach(k => { o[k] = u && typeof u === 'object' && !Array.isArray(u) && lastno(u, k) ? ocisti(priv[k], u[k]) : priv[k]; });
+      return o;
+    }
+    return typeof u === typeof priv ? u : priv;
+  }
+
+  function preveriUvoz(P, obj) {
+    if (!obj || typeof obj !== 'object' || obj.verzija !== 1) return { ok: false, napaka: 'Datoteka ni izvoz tega orodja (manjka "verzija": 1).' };
+    const s = zacetno(P);
+    if (poId(P.predloge, obj.predloga)) s.predloga = obj.predloga;
+    if (obj.jezik === 'en' || obj.jezik === 'sl') s.jezik = obj.jezik;
+    if (lastno(P.orodja, obj.orodje)) s.orodje = obj.orodje;
+    if (typeof obj.tipo === 'boolean') s.tipo = obj.tipo;
+    if (typeof obj.ne === 'boolean') s.ne = obj.ne;
+    const vr = obj.vrednosti && typeof obj.vrednosti === 'object' ? obj.vrednosti : {};
+    P.predloge.forEach(p => { if (lastno(vr, p.id)) s.vrednosti[p.id] = ocisti(privzeto(P, p), vr[p.id]); });
+    return { ok: true, stanje: s };
+  }
+
+  koren.S59DGO_JEDRO = { poId, predloga, moznosti, privzeto, primer, sestavi, zacetno, preveriUvoz, citati };
 })(globalThis);
 </script>
 <script id="predogled-js">
