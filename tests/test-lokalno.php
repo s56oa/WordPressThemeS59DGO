@@ -63,3 +63,30 @@ foreach ( array( "'arhiv'", "'cas_arhiva'", "'jedro'", "'predpona'", "'slike'", 
 $bin = file_get_contents( $koren . 'bin/lokalno.sh' );
 preveri( false === strpos( $bin, 'še ni izveden' ), 'bin/lokalno.sh izvede ukaz obnovi' );
 preveri( 1 === preg_match( '/run --rm[^\n]* prenos wp core download[^\n]*--locale=sl_SI/', $bin ), 'bin/lokalno.sh prenese jedro v vsebniku prenos (sl_SI)' );
+
+// Preverjanje (bin/preveri-lokalno.sh, Task 4).
+$naslovi = (string) @file_get_contents( $koren . 'lokalno/wp/naslovi.php' );
+preveri( 1 === preg_match( "/'post_status'\\s*=>\\s*'publish'/", $naslovi ), "naslovi.php vsebuje 'post_status' => 'publish'" );
+preveri( substr_count( $naslovi, "'post_status'" ) === preg_match_all( "/'post_status'\\s*=>\\s*'publish'/", $naslovi ), 'naslovi.php: vsak post_status je publish' );
+preveri( false === strpos( $naslovi, "'any'" ), 'naslovi.php ne jemlje neobjavljenih vsebin' );
+$preveri_sh = (string) @file_get_contents( $koren . 'bin/preveri-lokalno.sh' );
+$izprazni   = strpos( $preveri_sh, ': > /stanje/debug.log' );
+$naslovi_k  = strpos( $preveri_sh, 'eval-file /lokalno-wp/naslovi.php' );
+$kontrole   = strpos( $preveri_sh, 'preveri.mjs' );
+preveri( false !== $izprazni && false !== $kontrole && $izprazni < $kontrole, 'bin/preveri-lokalno.sh izprazni debug.log pred zagonom kontrol' );
+preveri( false !== $naslovi_k && $naslovi_k < $izprazni, 'bin/preveri-lokalno.sh požene WP-CLI (naslovi.php) pred praznjenjem debug.log' );
+preveri( false !== strpos( $preveri_sh, 'preveri_pripravljenost' ), 'bin/preveri-lokalno.sh pokliče preveri_pripravljenost' );
+foreach ( array( 'stanje:/stanje:ro', '../dist/preverjanje:/porocilo', './preverjanje:/opt/preverjanje/src:ro' ) as $iskano ) {
+	preveri( false !== strpos( $compose, $iskano ), "docker-compose.yml (brskalnik) vsebuje {$iskano}" );
+}
+// stanje-produkcije.json: staro se pobriše, novo gre v začasno datoteko, preveri se JSON, nato mv.
+$brisi = strpos( $obnovi, 'rm -f /stanje/stanje-produkcije.json' );
+$zacas = strpos( $obnovi, '> /stanje/stanje-produkcije.json.tmp' );
+$json  = strpos( $obnovi, 'JSON_THROW_ON_ERROR' );
+$mv    = strpos( $obnovi, 'mv /stanje/stanje-produkcije.json.tmp /stanje/stanje-produkcije.json' );
+preveri( false !== $brisi && false !== $zacas && $brisi < $zacas, 'obnovi.sh na začetku pobriše staro stanje-produkcije.json' );
+preveri( false !== $zacas && false !== $json && false !== $mv && $zacas < $json && $json < $mv, 'obnovi.sh zapiše stanje v .tmp, preveri JSON in ga premakne' );
+preveri( false === strpos( $obnovi, '--path="$html" > /stanje/stanje-produkcije.json' . "\n" ), 'obnovi.sh ne piše stanja neposredno' );
+// bin/preveri-lokalno.sh zažene validator (profil preverjanje); dol in pobrisi ga morata ustaviti.
+preveri( false !== strpos( $bin, 'dc --profile preverjanje down' . "\n" ), 'bin/lokalno.sh dol ustavi tudi validator' );
+preveri( false !== strpos( $bin, 'dc --profile preverjanje down -v' ), 'bin/lokalno.sh pobrisi ustavi tudi validator' );

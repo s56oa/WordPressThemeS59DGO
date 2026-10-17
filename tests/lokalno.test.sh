@@ -31,3 +31,27 @@ docker() { return 1; }
 if izpis="$(preveri_docker 2>&1)"; then napaka "preveri_docker bi moral vrniti 1"; fi
 case "$izpis" in *"Docker ne teče"*) ;; *) napaka "preveri_docker: sporočilo '$izpis'";; esac
 echo "OK: preveri_docker javi, da Docker ne teče"
+
+# preveri_pripravljenost: dc je navidezen (izhod 2 = ni stanja, 3 = neveljaven JSON, sicer izpiše arhiv).
+arhivi="$(mktemp -d "$tmp/arhivi.XXXXXX")"
+dc() { return 2; }
+if izpis="$(preveri_pripravljenost "$arhivi" 2>&1)"; then napaka "preveri_pripravljenost brez stanja bi moral vrniti 1"; fi
+case "$izpis" in *"Najprej poženi bin/lokalno.sh obnovi"*) ;; *) napaka "preveri_pripravljenost brez stanja: '$izpis'";; esac
+echo "OK: preveri_pripravljenost brez stanja vrne 1"
+
+dc() { return 3; }
+if izpis="$(preveri_pripravljenost "$arhivi" 2>&1)"; then napaka "preveri_pripravljenost z neveljavnim JSON bi moral vrniti 1"; fi
+case "$izpis" in *"ni veljaven JSON"*"bin/lokalno.sh obnovi"*) ;; *) napaka "preveri_pripravljenost z neveljavnim JSON: '$izpis'";; esac
+echo "OK: preveri_pripravljenost z neveljavnim JSON vrne 1"
+
+touch -t 202601010000 "$arhivi/backup star.tar.gz"
+touch -t 202602020000 "$arhivi/backup nov.tar.gz"
+dc() { echo "backup star.tar.gz"; }
+izpis="$(preveri_pripravljenost "$arhivi" 2>&1)" || napaka "preveri_pripravljenost z novejšim arhivom bi moral nadaljevati"
+case "$izpis" in *"Opozorilo"*"backup nov.tar.gz"*) ;; *) napaka "preveri_pripravljenost z novejšim arhivom: '$izpis'";; esac
+echo "OK: preveri_pripravljenost opozori na novejši arhiv in nadaljuje"
+
+dc() { echo "backup nov.tar.gz"; }
+izpis="$(preveri_pripravljenost "$arhivi" 2>&1)" || napaka "preveri_pripravljenost z najnovejšim arhivom bi moral vrniti 0"
+[ -z "$izpis" ] || napaka "preveri_pripravljenost z najnovejšim arhivom ne izpiše nič: '$izpis'"
+echo "OK: preveri_pripravljenost z najnovejšim arhivom je tiho"

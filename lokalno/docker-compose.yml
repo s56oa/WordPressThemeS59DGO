@@ -85,6 +85,8 @@ services:
     profiles: ["preverjanje"]
     volumes:
       - stanje:/stanje:ro
+      - ../dist/preverjanje:/porocilo
+      - ./preverjanje:/opt/preverjanje/src:ro
     networks:
       - notranje
 

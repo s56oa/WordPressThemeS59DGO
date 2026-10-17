@@ -11,6 +11,9 @@ obnova=/tmp/obnova
 export HOME=/tmp
 [ -n "${S59DGO_GESLO:-}" ] || { echo "Manjka S59DGO_GESLO." >&2; exit 1; }
 
+# Staro stanje ne sme preživeti neuspele obnove (preveri_pripravljenost ga zahteva).
+rm -f /stanje/stanje-produkcije.json /stanje/stanje-produkcije.json.tmp
+
 # Odjemalec MariaDB 11 privzeto zahteva TLS, strežnik 10.11 ga nima; wp db
 # kliče odjemalca z --no-defaults, zato --skip-ssl doda ovoj v PATH.
 mkdir -p /tmp/bin
@@ -110,7 +113,10 @@ fi
 wp rewrite flush --hard --path="$html" --quiet
 
 echo "Zapišem posnetek stanja produkcije …"
-wp eval-file /lokalno-wp/stanje-produkcije.php "$ime" "$cas" --path="$html" > /stanje/stanje-produkcije.json
+wp eval-file /lokalno-wp/stanje-produkcije.php "$ime" "$cas" --path="$html" > /stanje/stanje-produkcije.json.tmp
+php -r 'json_decode( (string) file_get_contents( $argv[1] ), true, 512, JSON_THROW_ON_ERROR );' /stanje/stanje-produkcije.json.tmp \
+  || { echo "Posnetek stanja ni veljaven JSON." >&2; exit 1; }
+mv /stanje/stanje-produkcije.json.tmp /stanje/stanje-produkcije.json
 
 rm -rf "$obnova"
 : > /stanje/debug.log

@@ -24,7 +24,7 @@ case "$ukaz" in
     echo "Lokalni WordPress: http://localhost:${S59DGO_VRATA}"
     ;;
   dol)
-    dc down
+    dc --profile preverjanje down
     ;;
   odpri)
     open http://localhost:${S59DGO_VRATA}
@@ -32,7 +32,7 @@ case "$ukaz" in
   pobrisi)
     read -r -p "Pobrišem vse lokalne podatke produkcije? [d/N] " odgovor
     if [ "$odgovor" = "d" ] || [ "$odgovor" = "D" ]; then
-      dc down -v
+      dc --profile preverjanje down -v
     else
       echo "Preklicano."
     fi

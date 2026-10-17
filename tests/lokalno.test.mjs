@@ -4,6 +4,9 @@ import {
   najdba, odkrijNaslove, delezObreza, razvrstiSliko, jeIzrezKartice, preveriOg,
   razvrstiZahtevo, razvrstiKonzolo, noveNajdbe, povzetek, porociloHtml,
 } from '../lokalno/preverjanje/jedro.mjs';
+import {
+  razcleniMeta, razvrstiDnevnik, kontrola2, kontrola4, kontrola5, kontrola6,
+} from '../lokalno/preverjanje/kontrole-streznik.mjs';
 
 let stevilo = 0;
 function ok(pogoj, sporocilo) { assert.ok(pogoj, sporocilo); stevilo++; }
@@ -113,5 +116,120 @@ h = porociloHtml({ ...osnova, najdbe: [najdba(1, 'rocni-korak', 'Poženi Regener
 ok(h.includes('Regenerate Thumbnails') && h.includes('src="a.png"') && h.includes('domov &quot;390&quot;'), 'porocilo: ročni koraki in galerija');
 ok(h.indexOf('Ročni koraki za produkcijo') > -1 && h.indexOf('Ročni koraki za produkcijo') < h.indexOf('1. Naslovne slike'), 'porocilo: ročni koraki pred razdelki kontrol');
 ok(h.indexOf('Regenerate Thumbnails') < h.indexOf('1. Naslovne slike'), 'porocilo: seznam ročnih korakov vsebuje korak pred razdelki');
+
+// kontrole-streznik.mjs: navidezen fetch po poti in metodi
+const odziv = (status, telo = '') => ({ status, ok: status < 400, text: async () => telo });
+const navidezen = (tabela) => async (url, o = {}) => {
+  const u = new URL(url);
+  const kljuc = `${o.method || 'GET'} ${u.pathname}${u.search}`;
+  if (!(kljuc in tabela)) throw new Error(`ni v tabeli: ${kljuc}`);
+  const v = tabela[kljuc];
+  return typeof v === 'function' ? v(o) : v;
+};
+const stopnje = (r, k) => r.filter((x) => x.stopnja === k);
+
+// razcleniMeta: samo <head>, property ali name, entitete v content
+const glava = `<html><head><meta charset="utf-8"><meta property="og:title" content="Radio &amp; klub">
+<meta name='twitter:card' content='summary_large_image' /><META PROPERTY="og:image:width" CONTENT="1200"></head>
+<body><meta property="og:title" content="v telesu"></body></html>`;
+const m = razcleniMeta(glava);
+ok(m.length === 3, 'razcleniMeta: samo oznake s ključem v <head>');
+ok(m[0].kljuc === 'og:title' && m[0].vrednost === 'Radio & klub', 'razcleniMeta: property in entitete');
+ok(m.some((x) => x.kljuc === 'twitter:card' && x.vrednost === 'summary_large_image'), 'razcleniMeta: name z enojnimi narekovaji');
+ok(m.some((x) => x.kljuc === 'og:image:width' && x.vrednost === '1200'), 'razcleniMeta: velike črke');
+
+// razvrstiDnevnik: tema = napaka, WP-CLI = prezrto, drugo = opozorilo, e-pošta zakrita
+const dnevnik = [
+  '[17-Oct-2026 10:00:00 UTC] PHP Warning:  Undefined variable $x in /var/www/html/wp-content/themes/s59dgo/inc/template-tags.php on line 12',
+  '[17-Oct-2026 10:00:01 UTC] PHP Deprecated:  x in phar:///usr/local/bin/wp/vendor/wp-cli/php-cli-tools/lib/cli/Colors.php on line 5',
+  '[17-Oct-2026 10:00:02 UTC] PHP Deprecated:  y in /var/www/html/wp-content/plugins/redirection/a.php on line 3',
+  'PHP Stack trace:',
+  '#0 /var/www/html/wp-includes/plugin.php(1): x()',
+  '[17-Oct-2026 10:00:03 UTC] s59dgo-lokalno: pošta ni poslana – za: ime@primer.si, zadeva: Test',
+  '[17-Oct-2026 10:00:04 UTC] PHP Warning:  z in /var/www/html/wp-content/themes/s59dgo-izdana/a.php on line 1',
+  '',
+].join('\n');
+r = razvrstiDnevnik(dnevnik);
+ok(stopnje(r, 'napaka').length === 1 && /template-tags\.php/.test(stopnje(r, 'napaka')[0].sporocilo), 'dnevnik: vrstica teme = napaka');
+ok(!r.some((x) => /Colors\.php/.test(x.sporocilo)), 'dnevnik: WP-CLI prezrt');
+ok(stopnje(r, 'opozorilo').length === 3, 'dnevnik: vtičnik, pošta in izdana tema = opozorilo');
+ok(r.every((x) => x.kontrola === 2), 'dnevnik: kontrola 2');
+ok(!JSON.stringify(r).includes('ime@primer.si'), 'dnevnik: e-pošta zakrita');
+ok(razvrstiDnevnik('').length === 0, 'dnevnik: prazen');
+r = razvrstiDnevnik(`${dnevnik.split('\n')[0]}\n${dnevnik.split('\n')[0].replace('10:00:00', '10:05:00')}\n`);
+ok(r.length === 1 && r[0].podrobnosti.ponovitev === 2, 'dnevnik: ponovitve združene');
+
+// kontrola2: koda po preusmeritvah
+const naslovi2 = [
+  { vrsta: 'domov', url: `${O}/`, pricakovano: 200 },
+  { vrsta: '404', url: `${O}/ni/`, pricakovano: 404 },
+  { vrsta: 'avtor', url: `${O}/?author=1`, pricakovano: 410 },
+];
+r = await kontrola2({ naslovi: naslovi2, fetch: navidezen({ 'GET /': odziv(200), 'GET /ni/': odziv(404), 'GET /?author=1': odziv(200) }) });
+ok(r.length === 1 && r[0].stopnja === 'napaka' && r[0].podrobnosti.vrsta === 'avtor' && r[0].podrobnosti.koda === 200, 'kontrola2: napačna koda = napaka');
+r = await kontrola2({ naslovi: naslovi2.slice(0, 1), fetch: async () => { throw new Error('ECONNREFUSED'); } });
+ok(r.length === 1 && r[0].stopnja === 'napaka' && /ECONNREFUSED/.test(r[0].sporocilo), 'kontrola2: neuspela zahteva = napaka');
+let redirect = null;
+await kontrola2({ naslovi: naslovi2.slice(0, 1), fetch: async (u, o) => { redirect = o.redirect; return odziv(200); } });
+ok(redirect === 'follow', 'kontrola2: sledi preusmeritvam');
+
+// kontrola4: Open Graph na objavah
+const ogHtml = (sirina) => `<head><meta property="og:title" content="A"><meta property="og:description" content="B">
+<meta property="og:image" content="${O}/x.jpg"><meta property="og:image:width" content="${sirina}"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image"></head>`;
+const naslovi4 = [
+  { vrsta: 'domov', url: `${O}/`, pricakovano: 200 },
+  { vrsta: 'objava-s-sliko', url: `${O}/a/`, pricakovano: 200 },
+  { vrsta: 'objava-brez-slike', url: `${O}/b/`, pricakovano: 200 },
+];
+const podatki4 = { objava_s_sliko_id: 7, objava_brez_slike_id: 8 };
+const stanje4 = (ima) => ({ slike: [{ objava_id: 7, ima_deljenje: ima }] });
+r = await kontrola4({ naslovi: naslovi4, podatki: podatki4, stanje: stanje4(true), fetch: navidezen({ 'GET /a/': odziv(200, ogHtml(1024)), 'GET /b/': odziv(200, ogHtml(1200)) }) });
+ok(r.length === 1 && r[0].kontrola === 4 && r[0].stopnja === 'napaka' && /1200/.test(r[0].sporocilo) && r[0].podrobnosti.url === `${O}/a/`, 'kontrola4: izrez 1200×630, širina 1024 = napaka z naslovom');
+r = await kontrola4({ naslovi: naslovi4, podatki: podatki4, stanje: stanje4(false), fetch: navidezen({ 'GET /a/': odziv(200, ogHtml(1024)), 'GET /b/': odziv(200, '<head></head>') }) });
+ok(r.length === 6 && r.every((x) => x.podrobnosti.url === `${O}/b/`), 'kontrola4: brez izreza ne preverja velikosti; objava brez oznak = 6 napak');
+
+// kontrola5: nastavitve s produkcije
+const nastavitve = { posts_per_page: 9, meni_glavni: 'Glavni', logotip: 12, gradniki: { 'noga-1': ['text-2'], 'noga-2': ['text-3'], 'noga-3': ['text-4'] }, tema: 's59dgo' };
+ok((await kontrola5({ stanje: { nastavitve } })).length === 0, 'kontrola5: vse nastavljeno');
+r = await kontrola5({ stanje: { nastavitve: { posts_per_page: 10, meni_glavni: null, logotip: 0, gradniki: { 'noga-1': [], 'noga-2': ['a'], 'noga-3': [] }, tema: 'twentytwentyfive' } } });
+ok(r.length === 6 && r.every((x) => x.stopnja === 'rocni-korak' && x.kontrola === 5), 'kontrola5: šest ročnih korakov');
+ok(r.some((x) => x.sporocilo.includes('9 objav na stran (zdaj: 10)')), 'kontrola5: objave na stran');
+ok(r.some((x) => x.sporocilo.includes('Glavni meni')), 'kontrola5: meni');
+ok(r.some((x) => /logotip/i.test(x.sporocilo)), 'kontrola5: logotip');
+ok(r.some((x) => x.sporocilo.includes('Noga – Kontakt')) && r.some((x) => x.sporocilo.includes('Noga – Podpora')), 'kontrola5: območja noge');
+ok(r.some((x) => x.sporocilo.includes('twentytwentyfive')), 'kontrola5: tema');
+
+// kontrola6: utrjevanje
+const varno = {
+  'POST /xmlrpc.php': odziv(200, '<methodResponse><fault><value>x</value></fault></methodResponse>'),
+  'GET /wp-json/wp/v2/users': odziv(404),
+  'POST /wp-json/batch/v1': odziv(404),
+  'GET /?author=1': odziv(410),
+  'GET /?author__not_in=1': odziv(403),
+  'GET /': odziv(200, '<head><title>x</title></head>'),
+};
+r = await kontrola6({ osnova: O, stanje: { php_v_uploads: [] }, fetch: navidezen(varno) });
+ok(r.length === 0, 'kontrola6: utrjena stran brez najdb');
+r = await kontrola6({ osnova: O, stanje: { php_v_uploads: ['wp-content/uploads/a.php'] }, fetch: navidezen({ ...varno, 'POST /xmlrpc.php': odziv(405) }) });
+ok(r.length === 1 && r[0].stopnja === 'opozorilo' && r[0].sporocilo.includes('PHP v uploads/ – preveri na produkciji') && r[0].sporocilo.includes('wp-content/uploads/a.php'), 'kontrola6: xmlrpc 405 je v redu; PHP v uploads = opozorilo');
+r = await kontrola6({ osnova: O, stanje: { php_v_uploads: [] }, fetch: navidezen({
+  'POST /xmlrpc.php': odziv(200, '<methodResponse><params><param><value><array><data><value><string>system.listMethods</string></value><value><string>wp.getUsersBlogs</string></value></data></array></value></param></params></methodResponse>'),
+  'GET /wp-json/wp/v2/users': odziv(200, '[]'),
+  'POST /wp-json/batch/v1': odziv(207),
+  'GET /?author=1': odziv(200),
+  'GET /?author__not_in=1': odziv(200),
+  'GET /': odziv(200, '<head><meta name="generator" content="WordPress 7.1.3"></head>'),
+}) });
+ok(r.length === 6 && r.every((x) => x.stopnja === 'napaka' && x.kontrola === 6), 'kontrola6: vsaka kršitev = napaka');
+// Brez .htaccess s produkcije ostanejo samo vgrajene metode system.* (mu-plugin izprazni xmlrpc_methods).
+const samoSystem = '<methodResponse><params><param><value><array><data><value><string>system.multicall</string></value><value><string>system.listMethods</string></value><value><string>system.getCapabilities</string></value></data></array></value></param></params></methodResponse>';
+r = await kontrola6({ osnova: O, stanje: { php_v_uploads: [] }, fetch: navidezen({ ...varno, 'POST /xmlrpc.php': odziv(200, samoSystem) }) });
+ok(r.length === 0, 'kontrola6: xmlrpc s samimi metodami system.* ne sprejema klicev');
+r = await kontrola6({ osnova: O, stanje: { php_v_uploads: [] }, fetch: navidezen({ ...varno, 'POST /xmlrpc.php': odziv(200, samoSystem.replace('system.multicall', 'pingback.ping')) }) });
+ok(r.length === 1 && r[0].sporocilo.includes('pingback.ping'), 'kontrola6: xmlrpc z metodo pingback.ping = napaka z imenom metode');
+let xmlrpcTelo = '';
+await kontrola6({ osnova: O, stanje: { php_v_uploads: [] }, fetch: navidezen({ ...varno, 'POST /xmlrpc.php': (o) => { xmlrpcTelo = o.body; return odziv(403); } }) });
+ok(xmlrpcTelo.includes('<methodName>system.listMethods</methodName>'), 'kontrola6: klic system.listMethods');
 
 console.log(`lokalno.test.mjs: ${stevilo} preverjanj OK`);
