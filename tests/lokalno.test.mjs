@@ -80,6 +80,10 @@ ok(razvrstiZahtevo('https://fonts.googleapis.com/x', { izvorStrani: O, iniciator
 ok(razvrstiZahtevo('https://www.youtube.com/embed/x', { izvorStrani: O, iniciatorUrl: `${O}/a/`, vsebinaUrlji: ['https://www.youtube.com/embed/x'] }) === 'vsebina', 'zahteva iz vsebine');
 ok(razvrstiZahtevo(`${O}/x.css`, { izvorStrani: O, iniciatorUrl: `${O}/a/`, vsebinaUrlji: [] }) === 'notranja', 'notranja zahteva');
 ok(razvrstiZahtevo('https://x.example/y', { izvorStrani: O, iniciatorUrl: null, vsebinaUrlji: [] }) === 'tema', 'brez iniciatorja, ni v vsebini = tema');
+ok(razvrstiZahtevo('https://fonts.googleapis.com/x', { izvorStrani: O, iniciatorUrl: `${O}/a/`, vsebinaUrlji: [] }) === 'tema', 'iniciator je dokument strani, ni v vsebini = tema');
+ok(razvrstiZahtevo('https://fonts.googleapis.com/x', { izvorStrani: O, iniciatorUrl: `${O}/a/`, vsebinaUrlji: ['https://fonts.googleapis.com/x'] }) === 'vsebina', 'iniciator je dokument strani, v vsebini = vsebina');
+ok(razvrstiZahtevo('https://x.example/y', { izvorStrani: O, iniciatorUrl: `${O}/wp-content/plugins/redirection/x.js`, vsebinaUrlji: [] }) === 'vsebina', 'iniciator vtičnik = vsebina');
+ok(razvrstiZahtevo('https://x.example/y', { izvorStrani: O, iniciatorUrl: `${O}/wp-includes/js/a.js`, vsebinaUrlji: [] }) === 'vsebina', 'iniciator jedro = vsebina');
 ok(razvrstiZahtevo('https://x.example/y', { izvorStrani: O, iniciatorUrl: null, vsebinaUrlji: ['https://x.example/y'] }) === 'vsebina', 'brez iniciatorja, v vsebini');
 
 // razvrstiKonzolo
@@ -107,6 +111,7 @@ ok(h.includes('Radio – klub') && !h.includes('&amp;#8211;'), 'porocilo: entite
 h = porociloHtml({ ...osnova, najdbe: [najdba(1, 'rocni-korak', 'Poženi Regenerate Thumbnails')],
   posnetki: [{ ime: 'domov "390"', izdana: 'a.png', trenutna: 'b.png', razlika: 'c.png', delez: 0.0123 }] });
 ok(h.includes('Regenerate Thumbnails') && h.includes('src="a.png"') && h.includes('domov &quot;390&quot;'), 'porocilo: ročni koraki in galerija');
-ok(/<h2[^>]*>[^<]*Naslovne slike/.test(h) || h.includes('Naslovne slike'), 'porocilo: naslovi kontrol');
+ok(h.indexOf('Ročni koraki za produkcijo') > -1 && h.indexOf('Ročni koraki za produkcijo') < h.indexOf('1. Naslovne slike'), 'porocilo: ročni koraki pred razdelki kontrol');
+ok(h.indexOf('Regenerate Thumbnails') < h.indexOf('1. Naslovne slike'), 'porocilo: seznam ročnih korakov vsebuje korak pred razdelki');
 
 console.log(`lokalno.test.mjs: ${stevilo} preverjanj OK`);

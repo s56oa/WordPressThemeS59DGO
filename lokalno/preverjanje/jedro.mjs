@@ -136,8 +136,14 @@ export function razvrstiZahtevo(url, { izvorStrani, iniciatorUrl, vsebinaUrlji }
   let izvor = null;
   try { izvor = new URL(url).origin; } catch { /* neveljaven URL šteje kot zunanji */ }
   if (izvor === izvorStrani) return 'notranja';
-  if (iniciatorUrl === null || iniciatorUrl === undefined) return vsebinaUrlji.includes(url) ? 'vsebina' : 'tema';
+  if (vsebinaUrlji.includes(url)) return 'vsebina';
+  if (iniciatorUrl === null || iniciatorUrl === undefined) return 'tema';
   if (iniciatorUrl.includes(POT_TEME)) return 'tema';
+  try {
+    const ini = new URL(iniciatorUrl);
+    // Dokument strani sam (npr. <link> v <head>) je izvor iz teme; vtičniki, nalaganja in jedro so vsebina.
+    if (ini.origin === izvorStrani && !/^\/(wp-content|wp-includes)\//.test(ini.pathname)) return 'tema';
+  } catch { /* neveljaven iniciator = vsebina */ }
   return 'vsebina';
 }
 
