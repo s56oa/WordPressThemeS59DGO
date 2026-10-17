@@ -3,3 +3,17 @@ dist/
 node_modules/
 *.zip
 .superpowers/
+
+# Občutljivi podatki – nikoli v javni repozitorij
+# Backupi produkcije (wp-config.php z gesli, uporabniki, komentarji)
+prod_backups/
+*.sql
+*.sql.gz
+wp-config.php
+.env
+# Interno gradivo društva (dopisi, izvirni logotipi)
+trenutni_logotipi/
+
+# Python predpomnilnik
+__pycache__/
+.pytest_cache/
