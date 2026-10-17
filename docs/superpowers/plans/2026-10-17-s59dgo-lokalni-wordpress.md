@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** `bin/lokalno.sh obnovi` iz backupa Backuply postavi kopijo www.s59dgo.si na `http://localhost:8080` s temo iz `s59dgo/`; `bin/preveri-lokalno.sh` na njej izvede kontrole 1–9 in zapiše `dist/preverjanje/porocilo.html`.
+**Goal:** `bin/lokalno.sh obnovi` iz backupa Backuply postavi kopijo www.s59dgo.si na `http://localhost:8059` s temo iz `s59dgo/`; `bin/preveri-lokalno.sh` na njej izvede kontrole 1–9 in zapiše `dist/preverjanje/porocilo.html`.
 
 **Architecture:** Docker Compose projekt `s59dgo-lokalno` v `lokalno/` z notranjim omrežjem brez interneta (db, wp, cli, validator, brskalnik) in enkratnim vsebnikom `prenos` za jedro. Bash v `bin/` orkestrira; podatke iz WordPressa dajejo PHP skripte za `wp eval-file` (izpis JSON); vse preverjanje strani teče v Node (Playwright) v vsebniku `brskalnik`, čista logika (razvrščanje, primerjava z izdano verzijo, stopnje, poročilo) je v enem modulu brez I/O, ki ga testira Node test v `bin/test.sh`.
 
@@ -14,7 +14,7 @@
 
 - Veja `lokalni-wordpress`, ustvarjena iz `naslovne-slike`. Nič se ne potisne na GitHub brez odobritve.
 - Podatki produkcije nikoli v git, `dist/s59dgo.zip` ali mapo repozitorija: samo v imenovanih volumnih Docker (`s59dgo-lokalno_html`, `_baza`, `_stanje`) in v `prod_backups/` (ignorirano). Izjema: `dist/preverjanje/` s posnetki samo objavljenih (`publish`) objav in strani.
-- Notranje omrežje `internal: true`; port samo `127.0.0.1:8080:80`. Internet ima samo vsebnik `prenos` (jedro WP) in gradnja slike `brskalnik`.
+- Notranje omrežje `internal: true`; port samo `127.0.0.1:8059:80`. Internet ima samo vsebnik `prenos` (jedro WP) in gradnja slike `brskalnik`.
 - Tema: bind mount `../s59dgo` → `/var/www/html/wp-content/themes/s59dgo:ro` v `wp` in `cli`. Obnova ne piše v `themes/s59dgo`.
 - Jedro WP sveže v verziji iz `wp-includes/version.php` backupa (2026-10-17: 7.1.3), `--locale=sl_SI`. `wp-config.php` in `.htaccess` iz backupa se ne uporabita.
 - Lokalni `wp-config.php` (prek `wp config create`): `WP_DEBUG=true`, `WP_DEBUG_LOG='/stanje/debug.log'`, `WP_DEBUG_DISPLAY=false`, `WP_ENVIRONMENT_TYPE='local'`, `WP_HTTP_BLOCK_EXTERNAL=true`, `DISABLE_WP_CRON=true`, `AUTOMATIC_UPDATER_DISABLED=true`, sveže soli.
@@ -27,7 +27,7 @@
 ## Review Focus
 
 1. **Več arhivov ali presledki v imenu v `prod_backups/`** – vzame se najnovejši po času spremembe, poti so pravilno citirane. Test v Task 1 (`najnovejsi_arhiv`).
-2. **Docker ne teče ali je port 8080 zaseden** – jasno slovensko sporočilo in izhod 1, ne sled napake Compose. Test v Task 1 (`preveri_docker` z navideznim `docker`).
+2. **Docker ne teče ali je port 8059 zaseden** – jasno slovensko sporočilo in izhod 1, ne sled napake Compose. Test v Task 1 (`preveri_docker` z navideznim `docker`).
 3. **Ponovna obnova na obstoječih volumnih** – baza in `html` se počistita, rezultat je enak kot ob prvi obnovi; tema iz repozitorija ostane nedotaknjena. Ročni preizkus v Task 2 (dvakratni zagon).
 4. **Manjkajoče vrste strani** (ni oznak, ni objave brez slike, ni strani) – odkrivanje naslovov jih izpusti z opozorilom, kontrole ne padejo. Test v Task 3 (`odkrijNaslove` z delnimi podatki).
 5. **Izvirnik naslovne slike manjši od 800×520 ali 1200×630** – WordPress izreza ne ustvari; to je `opozorilo` »izvirnik premajhen«, ne `rocni-korak` »Regenerate Thumbnails«, ki ga nikoli ne bi odpravil. Test v Task 3 (`razvrstiSliko`).
@@ -45,14 +45,14 @@
 - Modify: `bin/test.sh` (doda zagon `tests/lokalno.test.sh` v `bash:5.2`, za Node testom)
 
 **Interfaces:**
-- Produces (`lokalno/lib.sh`): `najnovejsi_arhiv <mapa>` → izpiše pot najnovejšega `*.tar.gz` ali vrne 1; `preveri_docker` → vrne 1 s sporočilom »Docker ne teče – zaženi Docker Desktop.« ali »Port 8080 je zaseden.«; `dc …` → `docker compose -p s59dgo-lokalno -f lokalno/docker-compose.yml …`; `wpcli …` → `dc run --rm --user 33:33 cli wp …`.
+- Produces (`lokalno/lib.sh`): `najnovejsi_arhiv <mapa>` → izpiše pot najnovejšega `*.tar.gz` ali vrne 1; `preveri_docker` → vrne 1 s sporočilom »Docker ne teče – zaženi Docker Desktop.« ali »Port 8059 je zaseden.«; `dc …` → `docker compose -p s59dgo-lokalno -f lokalno/docker-compose.yml …`; `wpcli …` → `dc run --rm --user 33:33 cli wp …`.
 - Produces (Compose): storitve `db`, `wp`, `cli`, `prenos`, `validator`, `brskalnik`; volumni `html` (`/var/www/html`), `baza`, `stanje` (`/stanje`); omrežji `notranje` (`internal: true`) in `zunanje` (samo `prenos`); profil `preverjanje` za `validator` in `brskalnik`; profil `orodja` za `cli` in `prenos`. `prod_backups/` je v `cli` priklopljen `ro` na `/backup`.
 
 - [ ] **Step 1: Ustvari vejo** `git checkout naslovne-slike && git checkout -b lokalni-wordpress`.
 
 - [ ] **Step 2: Napiši padajoči statični test `tests/test-lokalno.php`**
 
-Preveri v `lokalno/docker-compose.yml`: niz `internal: true`; `127.0.0.1:8080:80`; `../s59dgo:/var/www/html/wp-content/themes/s59dgo:ro`; `mariadb:10.11`; `wordpress:php8.5-apache`; `wordpress:cli-php8.5`; `../prod_backups:/backup:ro`; da se `zunanje` pojavi samo v bloku storitve `prenos` (in definiciji omrežij); da noben `image:` ne konča z `:latest` razen `ghcr.io/validator/validator` (dovoljeno, ker ni verzij). V `.gitignore`: `prod_backups/`.
+Preveri v `lokalno/docker-compose.yml`: niz `internal: true`; `127.0.0.1:8059:80`; `../s59dgo:/var/www/html/wp-content/themes/s59dgo:ro`; `mariadb:10.11`; `wordpress:php8.5-apache`; `wordpress:cli-php8.5`; `../prod_backups:/backup:ro`; da se `zunanje` pojavi samo v bloku storitve `prenos` (in definiciji omrežij); da noben `image:` ne konča z `:latest` razen `ghcr.io/validator/validator` (dovoljeno, ker ni verzij). V `.gitignore`: `prod_backups/`.
 
 - [ ] **Step 3: Napiši padajoči `tests/lokalno.test.sh`**
 
@@ -64,9 +64,9 @@ Zaženi `bin/test.sh` → pričakovano: pade na `test-lokalno.php` (datoteke ne 
 
 - [ ] **Step 4: Napiši `lokalno/docker-compose.yml`, `lokalno/lib.sh` in `bin/lokalno.sh`**
 
-`bin/lokalno.sh <ukaz>`: `gor` (`dc up -d db wp`), `dol` (`dc down`), `odpri` (`open http://localhost:8080`), `pobrisi` (vpraša »Pobrišem vse lokalne podatke produkcije? [d/N]«, nato `dc down -v`), `obnovi` (Task 2), brez ukaza ali neznan → navodilo za uporabo in izhod 1. Vsak ukaz najprej `preveri_docker`. `brskalnik` ima `build: ./preverjanje` (Task 3), `validator` sliko validatorja; obe le v profilu `preverjanje`.
+`bin/lokalno.sh <ukaz>`: `gor` (`dc up -d db wp`), `dol` (`dc down`), `odpri` (`open http://localhost:8059`), `pobrisi` (vpraša »Pobrišem vse lokalne podatke produkcije? [d/N]«, nato `dc down -v`), `obnovi` (Task 2), brez ukaza ali neznan → navodilo za uporabo in izhod 1. Vsak ukaz najprej `preveri_docker`. `brskalnik` ima `build: ./preverjanje` (Task 3), `validator` sliko validatorja; obe le v profilu `preverjanje`.
 
-- [ ] **Step 5: Zaženi teste** `bin/test.sh` → pričakovano: vsi OK, izhod 0. Nato `bin/lokalno.sh gor && curl -sI http://localhost:8080 | head -1` → `HTTP/1.1` odziv (namestitveni zaslon WP je pričakovan), `bin/lokalno.sh dol`.
+- [ ] **Step 5: Zaženi teste** `bin/test.sh` → pričakovano: vsi OK, izhod 0. Nato `bin/lokalno.sh gor && curl -sI http://localhost:8059 | head -1` → `HTTP/1.1` odziv (namestitveni zaslon WP je pričakovan), `bin/lokalno.sh dol`.
 
 - [ ] **Step 6: Commit** `lokalno/ bin/lokalno.sh tests/ bin/test.sh` – »Lokalni WordPress: Compose ogrodje in bin/lokalno.sh«.
 
@@ -89,7 +89,7 @@ Zaženi `bin/test.sh` → pričakovano: pade na `test-lokalno.php` (datoteke ne 
 
 `tests/test-lokalno-mu.php` (lastni stubi `add_filter`, `error_log` prek `ini_set('error_log', …)`): brez piškotka `s59dgo_lokalno_primerjalna_tema('s59dgo') === 's59dgo'`; s piškotkom in obstoječo mapo (`WP_CONTENT_DIR` na začasno mapo z `themes/s59dgo-izdana/`) → `'s59dgo-izdana'`; s piškotkom brez mape → `'s59dgo'`; `s59dgo_lokalno_posta(null, ['to' => 'a@b.si', 'subject' => 'Test'])` vrne `false` in dnevnik vsebuje `a@b.si`. Datoteka nima zaključne `?>`.
 V `tests/test-lokalno.php` dodaj za `lokalno/obnovi.sh`: zaporedje zamenjav domen je točno
-`https://www.s59dgo.si`, `http://www.s59dgo.si`, `//www.s59dgo.si`, `https://s59dgo.si`, `http://s59dgo.si`, `//s59dgo.si`, nato enako za `s59dgo.org` (prvi trije → `http://localhost:8080`, `//…` → `//localhost:8080`; preveri z `strpos` zaporedje); vsebuje `plugin deactivate two-factor backuply`; ne vsebuje `themes/s59dgo/` kot cilja kopiranja; vsebuje `--exclude` za `wp-content/themes/s59dgo` in mape Backuply (`backuply`, `backups_*`).
+`https://www.s59dgo.si`, `http://www.s59dgo.si`, `//www.s59dgo.si`, `https://s59dgo.si`, `http://s59dgo.si`, `//s59dgo.si`, nato enako za `s59dgo.org` (prvi trije → `http://localhost:8059`, `//…` → `//localhost:8059`; preveri z `strpos` zaporedje); vsebuje `plugin deactivate two-factor backuply`; ne vsebuje `themes/s59dgo/` kot cilja kopiranja; vsebuje `--exclude` za `wp-content/themes/s59dgo` in mape Backuply (`backuply`, `backups_*`).
 
 - [ ] **Step 2: Zaženi** `bin/test.sh` → pade na novih preverjanjih.
 
@@ -104,13 +104,13 @@ V `tests/test-lokalno.php` dodaj za `lokalno/obnovi.sh`: zaporedje zamenjav dome
 - [ ] **Step 5: Preizkus na pravem backupu**
 
 `bin/lokalno.sh obnovi` → izpis z geslom. Preveri:
-- `curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/` → `200`; HTML vsebuje `themes/s59dgo/style.css` in ne vsebuje `www.s59dgo.si`.
+- `curl -s -o /dev/null -w '%{http_code}' http://localhost:8059/` → `200`; HTML vsebuje `themes/s59dgo/style.css` in ne vsebuje `www.s59dgo.si`.
 - `bin/lokalno.sh` prek `wpcli plugin list --status=active --field=name` → `redirection` (brez `two-factor`, `backuply`).
 - `dc exec wp curl -sS -m 5 https://wordpress.org` → napaka (ni povezave).
 - `dc run --rm --user 33:33 cli wp eval 'var_dump(wp_mail("a@b.si","T","x"));'` → `bool(false)`.
 - `dc run --rm cli cat /stanje/stanje-produkcije.json | head -c 300` → JSON z `"jedro":"7.1.3"` in `"posts_per_page":10`.
 - Ponovi `bin/lokalno.sh obnovi` → enak rezultat, brez napak (Review Focus 3).
-- Prijava na `http://localhost:8080/wp-admin` z `lokalni` dela brez kode 2FA.
+- Prijava na `http://localhost:8059/wp-admin` z `lokalni` dela brez kode 2FA.
 
 - [ ] **Step 6: Commit** – »Lokalni WordPress: obnova iz backupa Backuply, lokalni mu-plugin«.
 
@@ -140,10 +140,10 @@ V `tests/test-lokalno.php` dodaj za `lokalno/obnovi.sh`: zaporedje zamenjav dome
 - [ ] **Step 1: Padajoči testi v `tests/lokalno.test.mjs`** (idiom `ok(pogoj, sporocilo)` kot `prompti.test.mjs`; uvozi `../lokalno/preverjanje/jedro.mjs`):
 - `delezObreza(800, 520) === 0`; `delezObreza(1600, 1040) === 0`; `Math.abs(delezObreza(1000, 1000) - 0.35) < 1e-9`; `delezObreza(1600, 900)` ≈ `1 - (900*800/520)/1600` (≈ 0.1346).
 - `razvrstiSliko({sirina: 640, visina: 427, ima_kartica: false, ima_deljenje: false, …})` vsebuje `opozorilo` »izvirnik premajhen« in **ne** vsebuje `rocni-korak` (Review Focus 5); `{sirina: 2000, visina: 1300, ima_kartica: false, ima_deljenje: true}` → točno en `rocni-korak` z »Regenerate Thumbnails«; `{sirina: 1000, visina: 1000, oba true}` → `opozorilo` »opazno obrezana«.
-- `jeIzrezKartice('http://localhost:8080/wp-content/uploads/2026/09/a-800x520.jpeg?v=1') === true`; `…/a-1024x683.jpeg` → `false`.
-- `odkrijNaslove({domov: 'http://localhost:8080/', oznaka: null, …ostali URL})` – ni naslova vrste `oznaka`, ena najdba `opozorilo` z »oznaka«, ni izjeme (Review Focus 4); vsebuje vrsto `avtor` s `pricakovano === 410` in `404` s `pricakovano === 404`.
+- `jeIzrezKartice('http://localhost:8059/wp-content/uploads/2026/09/a-800x520.jpeg?v=1') === true`; `…/a-1024x683.jpeg` → `false`.
+- `odkrijNaslove({domov: 'http://localhost:8059/', oznaka: null, …ostali URL})` – ni naslova vrste `oznaka`, ena najdba `opozorilo` z »oznaka«, ni izjeme (Review Focus 4); vsebuje vrsto `avtor` s `pricakovano === 410` in `404` s `pricakovano === 404`.
 - `preveriOg` z dvema `og:title` → `napaka` »podvojena«; prazen `og:description` → `napaka`; `imaIzrez: true` in `og:image:width` 1024 → `napaka`; popoln nabor → `[]`.
-- `razvrstiZahtevo('https://fonts.googleapis.com/x', {izvorStrani: 'http://localhost:8080', iniciatorUrl: 'http://localhost:8080/wp-content/themes/s59dgo/style.css', vsebinaUrlji: []}) === 'tema'`; `'https://www.youtube.com/embed/x'` z iniciatorjem strani in URL v `vsebinaUrlji` → `'vsebina'`; `http://localhost:8080/x.css` → `'notranja'`.
+- `razvrstiZahtevo('https://fonts.googleapis.com/x', {izvorStrani: 'http://localhost:8059', iniciatorUrl: 'http://localhost:8059/wp-content/themes/s59dgo/style.css', vsebinaUrlji: []}) === 'tema'`; `'https://www.youtube.com/embed/x'` z iniciatorjem strani in URL v `vsebinaUrlji` → `'vsebina'`; `http://localhost:8059/x.css` → `'notranja'`.
 - `noveNajdbe(['Napaka: x vrstica 12', 'B'], ['Napaka: x vrstica 40'])` → `['B']`.
 - `povzetek([najdba(1,'opozorilo','a')]).izhod === 0`; z eno `napaka` → `1`.
 - `porociloHtml({…, najdbe: [najdba(2, 'napaka', '<script>alert(1)</script>')]})` ne vsebuje `<script>alert` in vsebuje `&lt;script&gt;`.
@@ -170,8 +170,8 @@ V `tests/test-lokalno.php` dodaj za `lokalno/obnovi.sh`: zaporedje zamenjav dome
 
 **Interfaces:**
 - Consumes: `jedro.mjs` (Task 3), `stanje-produkcije.json` (Task 2), `dc`, `wpcli`, `preveri_docker`, `najnovejsi_arhiv` (Task 1).
-- Produces: `bin/preveri-lokalno.sh` → izhod 0/1 po `povzetek().izhod`; pred zagonom `preveri_pripravljenost` v `lokalno/lib.sh` (ni `stanje-produkcije.json` → »Najprej poženi bin/lokalno.sh obnovi« in izhod 1; novejši arhiv v `prod_backups/` od `arhiv` v stanju → opozorilo, nadaljuje). `preveri.mjs` prebere `/stanje/naslovi.json`, `/stanje/stanje-produkcije.json`, zapiše `/porocilo/porocilo.html` in `/porocilo/najdbe.json`, natisne povzetek. Vsaka kontrola: `async function kontrolaN(kontekst) → najdba[]`, `kontekst = {naslovi, stanje, osnova: 'http://localhost:8080', brskalnik?, izdana?}`.
-- Brskalnik doseže strežnik kot `http://localhost:8080` z `--host-resolver-rules=MAP localhost:8080 wp:80`; Node `fetch` v `kontrole-streznik.mjs` uporablja `http://wp` z glavo `Host: localhost:8080`.
+- Produces: `bin/preveri-lokalno.sh` → izhod 0/1 po `povzetek().izhod`; pred zagonom `preveri_pripravljenost` v `lokalno/lib.sh` (ni `stanje-produkcije.json` → »Najprej poženi bin/lokalno.sh obnovi« in izhod 1; novejši arhiv v `prod_backups/` od `arhiv` v stanju → opozorilo, nadaljuje). `preveri.mjs` prebere `/stanje/naslovi.json`, `/stanje/stanje-produkcije.json`, zapiše `/porocilo/porocilo.html` in `/porocilo/najdbe.json`, natisne povzetek. Vsaka kontrola: `async function kontrolaN(kontekst) → najdba[]`, `kontekst = {naslovi, stanje, osnova: 'http://localhost:8059', brskalnik?, izdana?}`.
+- Brskalnik doseže strežnik kot `http://localhost:8059` z `--host-resolver-rules=MAP localhost:8059 wp:80`; Node `fetch` v `kontrole-streznik.mjs` uporablja `http://wp` z glavo `Host: localhost:8059`.
 
 - [ ] **Step 1: Padajoči testi** – v `tests/lokalno.test.sh`: `preveri_pripravljenost` z navideznim `dc`, ki ne najde stanja, vrne 1 in izpiše »bin/lokalno.sh obnovi«. V `tests/test-lokalno.php`: `lokalno/wp/naslovi.php` vsebuje `'post_status' => 'publish'`; `bin/preveri-lokalno.sh` vsebuje `: > /stanje/debug.log` pred zagonom kontrol.
 

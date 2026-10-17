@@ -35,7 +35,7 @@ ne kontaktira.
 
 **Cilji**
 - `bin/lokalno.sh obnovi` iz najnovejšega arhiva v `prod_backups/` postavi
-  delujočo kopijo strani na `http://localhost:8080` s temo iz `s59dgo/`
+  delujočo kopijo strani na `http://localhost:8059` s temo iz `s59dgo/`
   (spremembe vidne takoj, brez ponovne obnove).
 - `bin/preveri-lokalno.sh` izvede kontrole 1–9 in izpiše povzetek v terminal ter
   HTML poročilo; izhodna koda ≠ 0, če pade blokirajoča kontrola.
@@ -65,7 +65,7 @@ ne kontaktira.
 | Storitev | Slika | Namen |
 |---|---|---|
 | `db` | `mariadb:10.11` (kot produkcija) | baza |
-| `wp` | `wordpress:php8.5-apache` (produkcija teče na PHP 8.5) | spletni strežnik, port 8080 |
+| `wp` | `wordpress:php8.5-apache` (produkcija teče na PHP 8.5) | spletni strežnik, port 8059 |
 | `cli` | `wordpress:cli-php8.5` | WP-CLI za obnovo in poizvedbe |
 | `validator` | `ghcr.io/validator/validator` | W3C Nu validator (kontrola 3), profil `preverjanje` |
 | `brskalnik` | `mcr.microsoft.com/playwright` (pripeta verzija) | posnetki, konzola, omrežje, axe (kontrole 2, 7, 8, 9), profil `preverjanje` |
@@ -75,13 +75,13 @@ Vse slike tečejo na arm64 (preverjeno 2026-10-17). Ime projekta Compose:
 
 **Omrežje.** `db`, `wp`, `cli`, `validator` in `brskalnik` so samo v notranjem
 omrežju (`internal: true`), brez dostopa do interneta in DNS zunaj Dockerja.
-Port 8080 je objavljen samo na `127.0.0.1` gostitelja. Edini korak z internetom
+Port 8059 je objavljen samo na `127.0.0.1` gostitelja. Edini korak z internetom
 je prenos jedra WordPressa ob obnovi (4.3, korak 2), ki teče v ločenem
 enkratnem vsebniku `prenos` na privzetem omrežju in piše samo v volumen jedra;
 ta vsebnik nima dostopa do baze in ne izvaja kode iz backupa.
 
 Brskalnik v vsebniku doseže WordPress prek notranjega imena (npr. `wp`), stran
-pa mora delovati na `http://localhost:8080`: Playwright preslika `localhost:8080`
+pa mora delovati na `http://localhost:8059`: Playwright preslika `localhost:8059`
 na `wp:80` (npr. `--host-resolver-rules` ali proxy v vsebniku), da so URL-ji v
 HTML enaki kot v brskalniku na Macu. Vsaka zahteva na drug izvor se v Playwrightu
 zabeleži in prekine (`route.abort`); kontroli 7 in 8 zato delata z
@@ -119,7 +119,7 @@ Brez argumenta vzame najnovejši `prod_backups/*.tar.gz`.
    `DISABLE_WP_CRON=true`, `AUTOMATIC_UPDATER_DISABLED=true`.
 4. Uvozi bazo, nato `wp search-replace` za `https://www.s59dgo.si`,
    `http://www.s59dgo.si`, `//www.s59dgo.si` in stari `s59dgo.org` →
-   `http://localhost:8080` (serializirani podatki prek WP-CLI).
+   `http://localhost:8059` (serializirani podatki prek WP-CLI).
 5. Izklopi `two-factor` in `backuply` (Backuply ne sme dosegati oddaljenih
    shramb). `redirection` ostane vklopljen, ker vpliva na odzive strani.
    Mu-plugin `00-s59dgo-hardening.php` ostane, kot je.
@@ -140,7 +140,7 @@ Brez argumenta vzame najnovejši `prod_backups/*.tar.gz`.
 10. Predpono tabel prebere iz `softsql.sql` (2026-10-17: `wp_`).
 11. Zamenjava domen gre od najdaljšega vzorca proti krajšemu
     (`https://www.s59dgo.si` → `http://www.s59dgo.si` → `//www.s59dgo.si`, enako
-    za `s59dgo.org`), da ne nastane `https://http://localhost:8080`; brez gole
+    za `s59dgo.org`), da ne nastane `https://http://localhost:8059`; brez gole
     zamenjave `s59dgo.org`/`s59dgo.si` brez `//`.
 
 Ostali ukazi: `gor`, `dol`, `odpri` (odpre brskalnik), `pobrisi` (odstrani
@@ -236,7 +236,7 @@ produkcijo.
 - Lokalni skrbnik `lokalni` namesto spreminjanja produkcijskih gesel.
 - Brez anonimizacije podatkov (ostanejo samo na tem računalniku).
 - Primerjava z zadnjim git tagom kot »izdano verzijo«.
-- Stopnje napaka/opozorilo/ročni korak v tabeli v razdelku 5; port 8080.
+- Stopnje napaka/opozorilo/ročni korak v tabeli v razdelku 5; port 8059.
 - Ločitev JS napak teme od ostalih pri kontroli 2 (po pregledu izvajalca).
 - Preverjanje dela na obstoječih volumnih, ročni koraki iz posnetka
   `stanje-produkcije.json` (po pregledu izvajalca).
