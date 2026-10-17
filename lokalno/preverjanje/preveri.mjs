@@ -2,9 +2,11 @@
 // Prebere /stanje/naslovi.json in /stanje/stanje-produkcije.json, požene kontrole,
 // zapiše /porocilo/porocilo.html in /porocilo/najdbe.json ter natisne povzetek.
 import { readFile, writeFile } from 'node:fs/promises';
+import { chromium } from 'playwright';
 import { najdba, odkrijNaslove, povzetek, porociloHtml, razkodiEntitete, NASLOVI_KONTROL } from './jedro.mjs';
 import { kontrola2, kontrola2Dnevnik, kontrola4, kontrola5, kontrola6 } from './kontrole-streznik.mjs';
 import { kontrola1, kontrola3 } from './kontrole-vsebina.mjs';
+import { kontrola2Konzola, kontrola7, kontrola8, kontrola9 } from './kontrole-brskalnik.mjs';
 
 const OSNOVA = 'http://localhost:8059';
 const beri = async (pot) => JSON.parse(await readFile(pot, 'utf8'));
@@ -12,9 +14,15 @@ const beri = async (pot) => JSON.parse(await readFile(pot, 'utf8'));
 const podatki = await beri('/stanje/naslovi.json');
 const stanje = await beri('/stanje/stanje-produkcije.json');
 const { naslovi, najdbe } = odkrijNaslove(podatki);
-const kontekst = { naslovi, podatki, stanje, osnova: OSNOVA, mapaPorocila: '/porocilo', opombe: [] };
+const kontekst = { naslovi, podatki, stanje, osnova: OSNOVA, mapaPorocila: '/porocilo', opombe: [], posnetki: [] };
+try {
+  kontekst.brskalnik = await chromium.launch();
+} catch (e) {
+  najdbe.push(najdba(2, 'napaka', `Brskalnik (Chromium) se ni zagnal: ${e.message.split('\n')[0]}`));
+}
 
 const kontrole = [[1, kontrola1], [2, kontrola2], [3, kontrola3], [4, kontrola4], [5, kontrola5], [6, kontrola6]];
+if (kontekst.brskalnik) kontrole.push([2, kontrola2Konzola], [7, kontrola7], [8, kontrola8], [9, kontrola9]);
 for (const [st, kontrola] of kontrole) {
   try {
     najdbe.push(...await kontrola(kontekst));
@@ -22,19 +30,20 @@ for (const [st, kontrola] of kontrole) {
     najdbe.push(najdba(st, 'napaka', `Kontrola ${st} se ni izvedla: ${e.message}`));
   }
 }
-// debug.log šele po vseh zahtevah (tudi tistih iz kontrol 1 in 3).
+await kontekst.brskalnik?.close();
+// debug.log šele po vseh zahtevah (tudi tistih iz kontrol 1, 3 in brskalnika).
 let dnevnik = '';
 try { dnevnik = await readFile('/stanje/debug.log', 'utf8'); } catch { /* ni dnevnika = ni vrstic */ }
 najdbe.push(...await kontrola2Dnevnik({ ...kontekst, dnevnik }));
 
 const cas = new Date().toISOString().replace('T', ' ').slice(0, 16) + ' UTC';
 await writeFile('/porocilo/najdbe.json', `${JSON.stringify({ cas, arhiv: stanje.arhiv, najdbe, opombe: kontekst.opombe }, null, 2)}\n`);
-await writeFile('/porocilo/porocilo.html', porociloHtml({ cas, arhiv: stanje.arhiv, najdbe, opombe: kontekst.opombe }));
+await writeFile('/porocilo/porocilo.html', porociloHtml({ cas, arhiv: stanje.arhiv, najdbe, posnetki: kontekst.posnetki, opombe: kontekst.opombe }));
 
 const p = povzetek(najdbe);
 console.log(`\nPreverjanje lokalne kopije (arhiv: ${stanje.arhiv})`);
-// Vsaka izvedena kontrola, tudi brez najdb.
-for (const [k] of kontrole) {
+// Vsaka kontrola, tudi brez najdb (2 združi HTTP, debug.log in konzolo).
+for (const k of Object.keys(NASLOVI_KONTROL).map(Number)) {
   const naslov = NASLOVI_KONTROL[k];
   const v = najdbe.filter((n) => n.kontrola === k);
   const st = (s) => v.filter((n) => n.stopnja === s).length;
@@ -46,6 +55,7 @@ if (rocni.length) {
   console.log('\nRočni koraki za produkcijo:');
   for (const s of rocni) console.log(`  - ${s}`);
 }
+console.log(`  Posnetki: ${kontekst.posnetki.length} parov`);
 console.log(`\nSkupaj: napake ${p.napake}, opozorila ${p.opozorila}, ročni koraki ${p.rocni}`);
 console.log('Poročilo: dist/preverjanje/porocilo.html');
 process.exit(p.izhod);

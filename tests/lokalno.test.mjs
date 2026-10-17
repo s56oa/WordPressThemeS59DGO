@@ -2,12 +2,16 @@
 import assert from 'node:assert/strict';
 import {
   najdba, odkrijNaslove, delezObreza, razvrstiSliko, jeIzrezKartice, preveriOg,
-  razvrstiZahtevo, razvrstiKonzolo, noveNajdbe, povzetek, porociloHtml, razkodiEntitete,
+  razvrstiZahtevo, razvrstiKonzolo, noveNajdbe, povzetek, porociloHtml, razkodiEntitete, oblikujDelez,
 } from '../lokalno/preverjanje/jedro.mjs';
 import {
   razcleniMeta, razvrstiDnevnik, kontrola2, kontrola4, kontrola5, kontrola6,
 } from '../lokalno/preverjanje/kontrole-streznik.mjs';
 import { pridobiHtml, slikeKartic, kontrola1, kontrola3 } from '../lokalno/preverjanje/kontrole-vsebina.mjs';
+import {
+  imePosnetka, vsebinaUrlji, iniciatorCdp, urlIzSklada, jeOdmevNalaganja, obreziSliko, primerjajSliki, razvrstiAxe,
+  kontrola2Konzola, kontrola7, kontrola8, kontrola9,
+} from '../lokalno/preverjanje/kontrole-brskalnik.mjs';
 import { mkdtemp, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -333,5 +337,101 @@ ok(stopnje(r, 'napaka').some((x) => x.sporocilo.includes('s59dgo-izdana')), 'kon
 // Validator ni dosegljiv → napaka z razlogom.
 r = await kontrola3({ naslovi: vrste3.slice(0, 1), cakajValidator: 0, fetch: async (url, o) => { if (url.startsWith('http://validator')) throw new Error('ECONNREFUSED'); return fetch3(strani3)(url, o); } });
 ok(stopnje(r, 'napaka').length === 1 && stopnje(r, 'napaka')[0].sporocilo.includes('ECONNREFUSED'), 'kontrola3: validator nedosegljiv = napaka');
+
+// porociloHtml: galerija posnetkov z deležem v slovenski obliki
+h = porociloHtml({ ...osnova, najdbe: [], posnetki: [{ ime: 'domov-390-temno', izdana: 'a.png', trenutna: 'b.png', razlika: 'c.png', delez: 0.031 }] });
+ok(h.includes('domov-390-temno') && h.includes('src="b.png"') && h.includes('3,1 %'), 'porocilo: posnetek z deležem 3,1 %');
+ok(oblikujDelez(0) === '0 %' && oblikujDelez(0.031) === '3,1 %' && oblikujDelez(0.00001) === '< 0,01 %' && oblikujDelez(0.0042) === '0,42 %', 'oblikujDelez');
+
+// kontrole-brskalnik.mjs: čista logika
+ok(imePosnetka('domov', 390, 'temno', 'izdana') === 'posnetki/domov-390-temno-izdana.png', 'imePosnetka');
+const vu = vsebinaUrlji(`<html><head><link href="https://fonts.example/f.css"></head><body>
+<div class="ovoj ovoj--besedilo"><img src="https://tuje.example/t.png"></div>
+<div class="besedilo"><div><iframe src="https://www.youtube.com/embed/x"></iframe></div>
+<img srcset="https://a.example/1.jpg 1x, https://a.example/2.jpg 2x" src="/u/a.jpg"><br/>
+<p style="background:url('https://ozadje.example/o.png')">x</p></div>
+<img src="https://za.example/z.png">
+<article><div class='kartica__izvlecek'><p><a href="https://b.example/?a=1&amp;b=2">x</a><a href="mailto:x@y.si">m</a></p></div></article></body></html>`, `${O}/objava/`);
+ok(['https://www.youtube.com/embed/x', 'https://a.example/1.jpg', 'https://a.example/2.jpg', `${O}/u/a.jpg`, 'https://ozadje.example/o.png', 'https://b.example/?a=1&b=2'].every((u) => vu.includes(u)), 'vsebinaUrlji: URL-ji iz .besedilo in .kartica__izvlecek');
+ok(!vu.some((u) => /tuje|za\.example|fonts|mailto/.test(u)), 'vsebinaUrlji: brez URL-jev zunaj vsebine');
+ok(vsebinaUrlji('<div class="besedilo"><iframe class="wp-embedded-content" src="https://x.example/a/embed/#?secret=ab#?secret=cd"></iframe></div>', `${O}/`)[0] === 'https://x.example/a/embed/', 'vsebinaUrlji: brez fragmenta (vdelava WP s #?secret=)');
+ok(iniciatorCdp({ type: 'parser', url: 'X' }) === 'X', 'iniciatorCdp: parser');
+ok(iniciatorCdp({ type: 'script', stack: { callFrames: [{ url: '' }], parent: { callFrames: [{ url: 'Y' }] } } }) === 'Y', 'iniciatorCdp: sklad s staršem');
+ok(iniciatorCdp({ type: 'other' }) === null && iniciatorCdp(undefined) === null, 'iniciatorCdp: brez vira');
+ok(urlIzSklada(`TypeError: x\n    at f (${O}/wp-content/themes/s59dgo/a.js:3:9)`) === `${O}/wp-content/themes/s59dgo/a.js`, 'urlIzSklada');
+ok(urlIzSklada('Error: x') === null, 'urlIzSklada: brez URL');
+ok(urlIzSklada(`Error: https://tuje.example/x ni na voljo\n    at ${O}/wp-includes/js/a.js:1:2`) === `${O}/wp-includes/js/a.js`, 'urlIzSklada: URL v sporočilu se ne šteje');
+const blok = new Set(['https://x.example/a.js']);
+ok(jeOdmevNalaganja({ besedilo: 'Failed to load resource: net::ERR_BLOCKED_BY_CLIENT', url: 'https://x.example/a.js' }, { strani: [`${O}/`], blokirani: blok }), 'odmev: blokirana zahteva');
+ok(jeOdmevNalaganja({ besedilo: 'Failed to load resource: the server responded with a status of 404 (Not Found)', url: `${O}/x/` }, { strani: [`${O}/x/`], blokirani: blok }), 'odmev: dokument 404');
+ok(!jeOdmevNalaganja({ besedilo: 'Failed to load resource: the server responded with a status of 404 (Not Found)', url: `${O}/wp-content/themes/s59dgo/a.js` }, { strani: [`${O}/`], blokirani: blok }), 'odmev: manjkajoča datoteka teme ni odmev');
+ok(!jeOdmevNalaganja({ besedilo: 'Uncaught TypeError', url: 'https://x.example/a.js' }, { strani: [], blokirani: blok }), 'odmev: prava napaka');
+const slikaPx = (w, h, px) => ({ width: w, height: h, data: Buffer.from(px.flatMap((v) => [v, v, v, 255])) });
+const obr = obreziSliko(slikaPx(3, 2, [1, 2, 3, 4, 5, 6]), 2, 1);
+ok(obr.width === 2 && obr.height === 1 && obr.data.length === 8 && obr.data[0] === 1 && obr.data[4] === 2, 'obreziSliko');
+const lazniPm = (a, b, d, w, h, o) => { let n = 0; for (let i = 0; i < w * h; i++) if (a[i * 4] !== b[i * 4]) { n++; d[i * 4] = 255; } lazniPm.prag = o.threshold; return n; };
+const pr = primerjajSliki(slikaPx(2, 2, [1, 1, 1, 1]), slikaPx(2, 3, [1, 9, 1, 1, 7, 7]), lazniPm);
+ok(blizu(pr.delez, 0.25) && pr.razlika.width === 2 && pr.razlika.height === 2 && lazniPm.prag === 0.1, 'primerjajSliki: višina krajše slike, prag 0,1');
+ok(pr.visini[0] === 2 && pr.visini[1] === 3, 'primerjajSliki: višini obeh slik');
+const krs = (id, impact, target) => ({ id, impact, target, help: `pomoč ${id}` });
+r = razvrstiAxe([
+  { vrsta: 'domov', shema: 'svetlo', trenutne: [krs('color-contrast', 'serious', '.a'), krs('color-contrast', 'serious', '.b'), krs('region', 'moderate', '.c'), krs('image-alt', 'critical', 'img')], izdane: [krs('color-contrast', 'serious', '.a'), krs('image-alt', 'critical', 'img')] },
+  { vrsta: 'stran', shema: 'temno', trenutne: [krs('image-alt', 'critical', 'img')], izdane: [krs('image-alt', 'critical', 'img')] },
+]);
+ok(r.every((x) => x.kontrola === 9), 'razvrstiAxe: kontrola 9');
+ok(stopnje(r, 'napaka').length === 1 && stopnje(r, 'napaka')[0].sporocilo.includes('color-contrast: .b') && stopnje(r, 'napaka')[0].sporocilo.includes('domov'), 'razvrstiAxe: nova serious = napaka');
+ok(stopnje(r, 'opozorilo').some((x) => x.sporocilo.includes('region') && x.sporocilo.includes('nova')), 'razvrstiAxe: nova moderate = opozorilo');
+const ia = stopnje(r, 'opozorilo').find((x) => x.sporocilo.includes('image-alt'));
+ok(ia && ia.podrobnosti.pojavitev === 2 && !stopnje(r, 'napaka').some((x) => x.sporocilo.includes('image-alt')), 'razvrstiAxe: kot v izdani = eno opozorilo s pojavitvami');
+
+// kontrole v brskalniku z navideznim obiskom
+const tema7 = `${O}/wp-content/themes/s59dgo/`;
+let obiski = [];
+const obisk = (rez) => async (stran, url, mozn) => { obiski.push({ url, ...mozn }); const v = typeof rez === 'function' ? rez(url, mozn) : rez; if (v instanceof Error) throw v; return { konzola: [], zahteve: [], posnetek: Buffer.alloc(0), html: '', naslov: 'Naslov', ...v }; };
+const naslovi7 = [{ vrsta: 'domov', url: `${O}/` }, { vrsta: 'objava-s-sliko', url: `${O}/a/` }];
+const k7 = (rez) => ({ naslovi: naslovi7, osnova: O, obisci: obisk(rez) });
+let kt = k7((url) => (url === `${O}/` ? {
+  konzola: [{ besedilo: 'Uncaught TypeError: x', url: `${tema7}glavni.js` }, { besedilo: 'Uncaught TypeError: x', url: `${tema7}glavni.js` }, { besedilo: 'jQuery napaka', url: `${O}/wp-includes/js/a.js` }],
+  zahteve: [{ url: 'https://fonts.googleapis.com/css', iniciatorUrl: `${tema7}style.css` }, { url: 'https://www.youtube.com/embed/x', iniciatorUrl: `${O}/` }],
+  html: '<div class="kartica__izvlecek"><iframe src="https://www.youtube.com/embed/x"></iframe></div>', naslov: 'Domov – S59DGO',
+} : new Error('Timeout 30000ms')));
+obiski = [];
+r = await kontrola2Konzola(kt);
+const r7 = await kontrola7(kt);
+ok(obiski.length === 2 && obiski.every((x) => x.sirina === 1280 && x.shema === 'svetlo' && !x.izdana), 'kontrola2Konzola/7: en obisk na naslov (trenutna, 1280, svetlo), skupen');
+ok(r.every((x) => x.kontrola === 2), 'kontrola2Konzola: kontrola 2');
+ok(stopnje(r, 'napaka').filter((x) => x.sporocilo.includes('TypeError')).length === 1, 'kontrola2Konzola: JS teme = ena napaka');
+ok(stopnje(r, 'opozorilo').length === 1 && stopnje(r, 'opozorilo')[0].sporocilo.includes('jQuery'), 'kontrola2Konzola: JS drugo = opozorilo');
+ok(stopnje(r, 'napaka').some((x) => x.sporocilo.includes('objava-s-sliko') && x.sporocilo.includes('Timeout')), 'kontrola2Konzola: neuspel obisk = napaka');
+ok(r7.every((x) => x.kontrola === 7), 'kontrola7: kontrola 7');
+ok(stopnje(r7, 'napaka').length === 1 && stopnje(r7, 'napaka')[0].sporocilo.includes('fonts.googleapis.com'), 'kontrola7: klic iz teme = napaka');
+ok(stopnje(r7, 'opozorilo').length === 1 && stopnje(r7, 'opozorilo')[0].sporocilo.includes('Domov – S59DGO') && stopnje(r7, 'opozorilo')[0].sporocilo.includes('youtube'), 'kontrola7: klic iz vsebine = opozorilo z naslovom strani');
+
+// kontrola8 in kontrola9: navidezni posnetki (JSON) in navidezen pixelmatch
+const kodek = { beri: (b) => { const o = JSON.parse(b.toString()); return slikaPx(o.w, o.h, o.px); }, pisi: (s) => Buffer.from(JSON.stringify({ w: s.width, h: s.height })) };
+const posn = (px, h = 1) => Buffer.from(JSON.stringify({ w: 2, h, px }));
+const naslovi8 = [{ vrsta: 'domov', url: `${O}/` }, { vrsta: 'stran', url: `${O}/o-klubu/` }, { vrsta: 'avtor', url: `${O}/?author=1` }];
+const mapa8 = await mkdtemp(join(tmpdir(), 's59dgo-k8-'));
+const rez8 = (url, { izdana, sirina, shema }) => ({
+  html: izdana ? '<link href="/wp-content/themes/s59dgo-izdana/style.css">' : '<link href="/wp-content/themes/s59dgo/style.css">',
+  posnetek: url === `${O}/` && sirina === 390 && shema === 'temno' && !izdana ? posn([1, 9]) : posn([1, 1]),
+  krsitve: url === `${O}/` && !izdana ? [krs('color-contrast', 'serious', '.nova')] : [],
+});
+obiski = [];
+const k8 = { naslovi: naslovi8, osnova: O, mapaPorocila: mapa8, obisci: obisk(rez8), slike: { ...kodek, pixelmatch: lazniPm } };
+r = await kontrola8(k8);
+ok(obiski.length === 2 * 2 * 2 * 2, 'kontrola8: 2 vrsti × 2 širini × 2 shemi × 2 temi (vrsta brez naslova izpuščena, avtor ni na seznamu)');
+ok(k8.posnetki.length === 8 && k8.posnetki.every((s) => s.izdana.startsWith('posnetki/') && s.razlika.endsWith('-razlika.png')), 'kontrola8: 8 parov v kontekst.posnetki');
+const datoteke8 = await readdir(join(mapa8, 'posnetki'));
+ok(datoteke8.length === 24 && datoteke8.includes('domov-390-temno-trenutna.png'), 'kontrola8: PNG izdana, trenutna, razlika za vsak par');
+ok(r.length === 1 && r[0].stopnja === 'opozorilo' && r[0].kontrola === 8 && r[0].sporocilo.includes('domov-390-temno') && r[0].sporocilo.includes('50,0 %'), 'kontrola8: par z razliko = opozorilo z deležem');
+r = await kontrola9(k8);
+ok(obiski.length === 16, 'kontrola9: brez dodatnih obiskov (axe pri 1280 med obiski kontrole 8)');
+ok(obiski.filter((x) => x.axe).length === 8 && obiski.filter((x) => x.axe).every((x) => x.sirina === 1280), 'kontrola9: axe samo pri 1280');
+ok(stopnje(r, 'napaka').length === 2 && stopnje(r, 'napaka').every((x) => x.sporocilo.includes('.nova')), 'kontrola9: nova kršitev v obeh shemah = napaka');
+await rm(mapa8, { recursive: true, force: true });
+// Izdana tema se ne izriše → napaka, brez lažne primerjave.
+r = await kontrola8({ naslovi: naslovi8.slice(0, 1), osnova: O, mapaPorocila: await mkdtemp(join(tmpdir(), 's59dgo-k8-')), obisci: obisk({ html: '<link href="/wp-content/themes/s59dgo/style.css">', posnetek: posn([1, 1]) }), slike: { ...kodek, pixelmatch: lazniPm } });
+ok(r.length === 1 && r[0].stopnja === 'napaka' && r[0].sporocilo.includes('s59dgo-izdana'), 'kontrola8: izdana tema ni izrisana = napaka');
 
 console.log(`lokalno.test.mjs: ${stevilo} preverjanj OK`);

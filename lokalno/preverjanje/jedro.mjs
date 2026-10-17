@@ -170,6 +170,14 @@ export function povzetek(najdbe) {
   return { napake, opozorila: stej('opozorilo'), rocni: stej('rocni-korak'), izhod: napake > 0 ? 1 : 0 };
 }
 
+// Delež (0–1) kot odstotek s slovensko decimalno vejico: 0.031 → »3,1 %«.
+export function oblikujDelez(delez) {
+  if (delez === 0) return '0 %';
+  const p = delez * 100;
+  if (p < 0.01) return '< 0,01 %';
+  return `${(p < 1 ? p.toFixed(2) : p.toFixed(1)).replace('.', ',')} %`;
+}
+
 const ST_OZNAKA = { 'napaka': 'Napaka', 'opozorilo': 'Opozorilo', 'rocni-korak': 'Ročni korak' };
 
 // Miniature v podrobnostih najdbe (kontrola 1): relativni poti do slik v mapi poročila.
@@ -199,7 +207,7 @@ export function porociloHtml({ cas, arhiv, najdbe, posnetki = [], opombe = [] })
     return `<section><h2>${k}. ${ubezi(naslov)}</h2>${telo}${pojasnila}</section>`;
   }).join('\n');
   const galerija = posnetki.length
-    ? `<section><h2>Posnetki</h2><div class="galerija">${posnetki.map((s) => `<figure><figcaption>${u(s.ime)}: ${ubezi((s.delez * 100).toFixed(2))} % spremenjenih pikslov</figcaption>`
+    ? `<section><h2>Posnetki</h2><div class="galerija">${posnetki.map((s) => `<figure><figcaption>${u(s.ime)}: ${ubezi(oblikujDelez(s.delez))} spremenjenih pikslov (izdana · trenutna · razlika)</figcaption>`
       + `<div class="trojica"><img src="${ubezi(s.izdana)}" alt="Izdana: ${u(s.ime)}"><img src="${ubezi(s.trenutna)}" alt="Trenutna: ${u(s.ime)}"><img src="${ubezi(s.razlika)}" alt="Razlika: ${u(s.ime)}"></div></figure>`).join('')}</div></section>`
     : '';
   return `<!doctype html>
