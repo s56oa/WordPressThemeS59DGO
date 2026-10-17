@@ -62,3 +62,72 @@ foreach ( array( '2-temno', '3-temno', '2-svetlo', '3-svetlo' ) as $k ) {
 }
 preveri( array( 'univerzalno', 'midjourney', 'chatgpt', 'ideogram', 'sd' ) === array_keys( $p['orodja'] ), '5 orodij v pravem vrstnem redu' );
 preveri( 4 === count( $p['vrhovi'] ), '4 motivi za vrh grebena' );
+
+preg_match_all( '/^### ([3-6]\.\d) /m', $md, $n );
+$razdelki = array_values( array_diff( array_unique( $n[1] ), array( '3.2', '3.3' ) ) );
+$v_orodju = array_column( $p['predloge'], 'razdelek' );
+sort( $razdelki );
+sort( $v_orodju );
+preveri( 15 === count( $razdelki ) && $razdelki === $v_orodju, 'vsak razdelek §3–§6 ima natanko eno predlogo (15)' );
+preveri( count( $p['predloge'] ) === count( array_unique( array_column( $p['predloge'], 'id' ) ) ), 'id-ji predlog so enolični' );
+
+foreach ( $p['predloge'] as $t ) {
+	$id = $t['id'];
+	preveri( ! empty( $t['formati'] ), "{$id}: ima vsaj en format" );
+	foreach ( $t['formati'] as $f ) {
+		preveri( isset( $f['id'], $f['ime'], $f['ar'], $f['w'], $f['h'], $f['en'], $f['sl'] ), "{$id}: format {$f['id']} je popoln" );
+	}
+	$dovoljene = array( 'format' );
+	$obvezne   = array( 'format' );
+	foreach ( array( 'sonce', 'greben' ) as $e ) {
+		if ( ! empty( $t[ $e ] ) ) {
+			$dovoljene[] = $e;
+			$obvezne[]   = $e;
+		}
+	}
+	if ( ! empty( $t['ozadja'] ) ) {
+		$dovoljene[] = 'ozadje';
+		$obvezne[]   = 'ozadje';
+	}
+	foreach ( isset( $t['poudarki'] ) ? $t['poudarki'] : array() as $x ) {
+		$dovoljene[] = 'p:' . $x['id'];
+		$obvezne[]   = 'p:' . $x['id'];
+	}
+	foreach ( $t['polja'] as $f ) {
+		if ( 'motiv' === $f['vrsta'] ) {
+			array_push( $dovoljene, 'motiv', 'dodatno' );
+			array_push( $obvezne, 'motiv', 'dodatno' );
+			continue;
+		}
+		$dovoljene[] = $f['id'];
+		$obvezne[]   = $f['id'];
+		if ( 'vrstice' === $f['vrsta'] ) {
+			$dovoljene[] = 'N';
+			$stolpci     = array_merge( array( '#' ), array_column( $f['stolpci'], 'id' ) );
+			foreach ( array( 'en', 'sl' ) as $j ) {
+				preg_match_all( '/\{\{([^}]+)\}\}/', $f['vrstica'][ $j ], $r );
+				preveri( ! array_diff( $r[1], $stolpci ), "{$id}: vrstica {$j} uporablja le stolpce" );
+			}
+		}
+		if ( 'seznam' === $f['vrsta'] ) {
+			array_push( $dovoljene, $f['id'] . '_N', $f['id'] . '_mreza' );
+		}
+		if ( 'poudarek' === $f['vrsta'] ) {
+			preveri( in_array( $f['vir'], array_column( $t['polja'], 'id' ), true ), "{$id}: poudarek kaže na obstoječe polje" );
+		}
+	}
+	$po_jezikih = array();
+	foreach ( array( 'en', 'sl' ) as $j ) {
+		preveri( isset( $t['besedilo'][ $j ] ) && '' !== $t['besedilo'][ $j ], "{$id}: besedilo {$j}" );
+		preg_match_all( '/\{\{([^}]+)\}\}/', $t['besedilo'][ $j ], $r );
+		$rabljene         = array_values( array_unique( $r[1] ) );
+		$po_jezikih[ $j ] = $rabljene;
+		preveri( ! array_diff( $rabljene, $dovoljene ), "{$id} {$j}: vse reže imajo vir (" . implode( ',', array_diff( $rabljene, $dovoljene ) ) . ')' );
+		preveri( ! array_diff( $obvezne, $rabljene ), "{$id} {$j}: vsa polja in elementi so uporabljeni (" . implode( ',', array_diff( $obvezne, $rabljene ) ) . ')' );
+		preveri( false === strpos( preg_replace( '/\{\{[^}]+\}\}/', '', $t['besedilo'][ $j ] ), '{' ), "{$id} {$j}: brez starih {placeholderjev}" );
+	}
+	sort( $po_jezikih['en'] );
+	sort( $po_jezikih['sl'] );
+	preveri( $po_jezikih['en'] === $po_jezikih['sl'], "{$id}: EN in SL uporabljata iste reže" );
+	preveri( isset( $t['shema']['elementi'] ) && is_array( $t['shema']['elementi'] ), "{$id}: ima shemo predogleda" );
+}
