@@ -4,7 +4,7 @@ $koren = __DIR__ . '/../';
 $cesta = $koren . 'lokalno/docker-compose.yml';
 preveri( file_exists( $cesta ), 'lokalno/docker-compose.yml obstaja' );
 $compose = file_get_contents( $cesta );
-foreach ( array( 'internal: true', '127.0.0.1:8080:80', '../s59dgo:/var/www/html/wp-content/themes/s59dgo:ro', 'mariadb:10.11', 'wordpress:php8.5-apache', 'wordpress:cli-php8.5', '../prod_backups:/backup:ro' ) as $iskano ) {
+foreach ( array( 'internal: true', '127.0.0.1:8059:80', '../s59dgo:/var/www/html/wp-content/themes/s59dgo:ro', 'mariadb:10.11', 'wordpress:php8.5-apache', 'wordpress:cli-php8.5', '../prod_backups:/backup:ro' ) as $iskano ) {
 	preveri( false !== strpos( $compose, $iskano ), "docker-compose.yml vsebuje {$iskano}" );
 }
 // Omrežje »zunanje« sme biti le v storitvi prenos (in v definiciji omrežij).

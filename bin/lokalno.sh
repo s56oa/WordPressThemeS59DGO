@@ -21,13 +21,13 @@ preveri_docker || exit 1
 case "$ukaz" in
   gor)
     dc up -d db wp vrata
-    echo "Lokalni WordPress: http://localhost:8080"
+    echo "Lokalni WordPress: http://localhost:${S59DGO_VRATA}"
     ;;
   dol)
     dc down
     ;;
   odpri)
-    open http://localhost:8080
+    open http://localhost:${S59DGO_VRATA}
     ;;
   pobrisi)
     read -r -p "Pobrišem vse lokalne podatke produkcije? [d/N] " odgovor
